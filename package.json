@@ -1,0 +1,79 @@
+{
+  "name": "@eduvault/eduvault-js",
+  "version": "1.2.23",
+  "description": "An SDK that allows app creators to quickly create and authenticate a user-owned database",
+  "main": "dist/main/index.js",
+  "typings": "dist/main/index.d.ts",
+  "module": "dist/module/index.js",
+  "repository": "https://github.com/eduvault/eduvault",
+  "license": "MIT",
+  "keywords": [],
+  "scripts": {
+    "clean:dist": "rimraf dist",
+    "clean:modules": "rimraf node_modules package-lock.json",
+    "inst": "npm install",
+    "prepublishOnly": "run-s build",
+    "prebuild": "npm run  clean:dist",
+    "build": "run-p build:*",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:module": "tsc -p tsconfig.module.json",
+    "watch:main": "tsc -p tsconfig.main.json -w",
+    "watch:module": "tsc -p tsconfig.module.json -w",
+    "dev": "run-p watch:module watch:main",
+    "dev:watch": "TS_NODE_PROJECT='./tsconfig.main.json' ts-node-dev --inspect --poll --respawn ./src src/index.ts",
+    "test": "jest --env=./jest-env.js --detectOpenHandles",
+    "test:watch": "jest --env=./jest-env.js --detectOpenHandles --watch"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "dependencies": {
+    "@textile/hub": "^6.3.0",
+    "@textile/threaddb": "^0.2.0",
+    "@types/lodash": "^4.14.168",
+    "axios": "^0.21.1",
+    "buffer": "^6.0.3",
+    "core-js": "^3.8.3",
+    "core-js-bundle": "^3.8.3",
+    "crypto-js": "^4.0.0",
+    "google-protobuf": "^3.15.0-rc.1",
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.1",
+    "sqlite3": "^5.0.2",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.0.1",
+    "@types/jest": "^26.0.20",
+    "@types/node": "^14.14.27",
+    "@typescript-eslint/eslint-plugin": "^4.0.1",
+    "@typescript-eslint/parser": "^4.0.1",
+    "cspell": "^4.1.0",
+    "dotenv": "^8.2.0",
+    "eslint": "^7.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "isomorphic-fetch": "^3.0.0",
+    "jest": "^26.6.3",
+    "nodemon": "^2.0.7",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.1.1",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^26.5.1",
+    "ts-node": "^9.1.1",
+    "ts-node-dev": "^1.1.1",
+    "typescript": "^4.1.5"
+  },
+  "files": [
+    "dist/main",
+    "dist/module",
+    "!**/*.spec.*",
+    "!**/*.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "prettier": {
+    "singleQuote": true
+  }
+}
