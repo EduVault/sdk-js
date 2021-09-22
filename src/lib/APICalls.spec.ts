@@ -5,17 +5,18 @@
 // const eduvault = new EduVault();
 
 // // granted, this is somewhat of an integration test, because it tests the API server as well
-// describe('personRegister', () => {
-//   it('Can register a person', async () => {
-//     const person = await eduvault.personRegister({ username, password });
-//     // console.log({ person });
-//     expect(person).toBeTruthy();
-//     expect(person?.data.pwEncryptedPrivateKey.length).toBeGreaterThan(30);
-//     expect(person?.data.jwt.length).toBeGreaterThan(30);
-//     expect(person?.data.pubKey.length).toBeGreaterThan(30);
-//     expect(person?.data.threadIDStr.length).toBeGreaterThan(30);
-//   });
-// });
+describe('personRegister', () => {
+  it('Can register a person', async () => {
+    // const person = await eduvault.personRegister({ username, password });
+    // // console.log({ person });
+    // expect(person).toBeTruthy();
+    // expect(person?.data.pwEncryptedPrivateKey.length).toBeGreaterThan(30);
+    // expect(person?.data.jwt.length).toBeGreaterThan(30);
+    // expect(person?.data.pubKey.length).toBeGreaterThan(30);
+    // expect(person?.data.threadIDStr.length).toBeGreaterThan(30);
+    expect(true).toBeTruthy();
+  });
+});
 
 // describe('devVerify', () => {
 //   it('Can verify a developer', async () => {
