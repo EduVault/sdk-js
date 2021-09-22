@@ -34,6 +34,7 @@ import {
   pingServer,
 } from './utils';
 export * from './types';
+export { startWorker } from './lib/api/mocks/browser';
 class EduVault {
   // config variables
   URL_APP = URL_APP;
