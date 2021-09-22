@@ -1,5 +1,5 @@
-import { CollectionConfig } from '@textile/threaddb/dist/cjs/local/collection';
 import { JSONSchema } from '@textile/threaddb';
+import { CollectionConfig } from '@textile/threaddb/dist/cjs/local/collection';
 
 export const dummyPersonSchema: JSONSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',

@@ -1,7 +1,6 @@
 import EduVault from '../index';
 import { deckSchemaConfig } from '../types';
 import { initOptions } from '../types';
-import { formatURLApi, formatURLApp, formatWSApi } from '../config';
 
 /** Starts EduVault.
  * 1. If passed a buttonID, will call setupLoginButton() on the provided element ID
@@ -24,12 +23,8 @@ export const init = async (self: EduVault, options: initOptions) => {
   if (options.onLocalStart) self.onLocalStart = options.onLocalStart;
   if (options.onRemoteStart) self.onRemoteStart = options.onRemoteStart;
   if (options.onRemoteReady) self.onRemoteReady = options.onRemoteReady;
-  if (options.eduvaultHost) {
-    self.HOST = options.eduvaultHost;
-    self.URL_APP = formatURLApp(options.eduvaultHost);
-    self.URL_API = formatURLApi(options.eduvaultHost);
-    self.WS_API = formatWSApi(options.eduvaultHost);
-  }
+  if (options.URL_API) self.URL_API = options.URL_API;
+  if (options.URL_APP) self.URL_APP = options.URL_APP;
   if (options.log) console.log({ options });
   if (self.buttonID) {
     self.setupLoginButton({

@@ -4,7 +4,8 @@ import {
   Collection,
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
-import { formatURLApi, formatURLApp, formatWSApi, isTestEnv } from './config';
+import { URL_API, URL_APP } from './config';
+import { apiGet, apiPost, apiReq } from './lib/api';
 
 import {
   appLogin,
@@ -17,73 +18,81 @@ import {
 import { Credentials, loadCredentials } from './lib/credentials';
 import {
   // debouncedSync,
+  loginWithChallenge,
   startLocalDB,
   startLocalWrapped,
   startRemoteDB,
   startRemoteWrapped,
   sync,
   syncChanges,
-  loginWithChallenge,
 } from './lib/db';
 import { init } from './lib/init';
 import { setupLoginButton } from './lib/loginButton';
 import { initOptions } from './types';
 import {
   // checkConnectivityClearBacklog,
-  isServerOnline,
+  pingServer,
 } from './utils';
 
 class EduVault {
-  log? = false;
-  isOnline = isServerOnline(this);
+  // config variables
+  URL_APP = URL_APP;
+  URL_API = URL_API;
 
+  // init options
+  log? = false;
+  appID?: string;
+  buttonID?: string;
+  redirectURL?: string;
+
+  // api
+  apiReq = apiReq(this);
+  apiGet = apiGet(this);
+  apiPost = apiPost(this);
+  pingServer = pingServer(this);
+
+  // helpers
+  isOnline = pingServer(this);
   privateKeyValid = () => {
     return this.privateKey?.canSign();
   };
 
+  // methods
   personRegister = personRegister(this);
   devVerify = devVerify(this);
   clearCollections = clearCollections(this);
   appRegister = appRegister(this);
   appLogin = appLogin(this);
   getJWT = getJWT(this);
-
-  appID?: string;
-
   setupLoginButton = setupLoginButton(this);
-  buttonID?: string;
-  redirectURL?: string;
-  HOST = !isProdEnv() || isTestEnv() ? 'localhost' : 'eduvault.org';
-  URL_APP = formatURLApp(this.HOST);
-  URL_API = formatURLApi(this.HOST);
-  WS_API = formatWSApi(this.HOST);
-  db?: Database;
-  loadingStatus = 'not started';
-  isSyncing = false;
-  isLocalReady = false;
-  isRemoteReady = false;
   loadCredentials = loadCredentials(this);
   onLoadCredentialsStart?: () => any;
   onLoadCredentialsReady?: (credentials: Credentials) => any;
   onLoadCredentialsError?: (error: string) => any;
+
+  // status
+  loadingStatus = 'not started';
+  isSyncing = false;
+  isLocalReady = false;
+  isRemoteReady = false;
+
+  // credentials
   privateKey?: PrivateKey;
   threadID?: ThreadID | null;
   jwt?: string;
   remoteToken?: string;
 
+  // db and db auth
+  db?: Database;
   loginWithChallenge = loginWithChallenge(this);
-
   startLocalDB = startLocalWrapped(this);
   onLocalStart?: () => any;
   onLocalReady?: (db: Database) => any;
-
   startRemoteRaw = startRemoteDB(this);
   startRemoteDB = startRemoteWrapped(this);
-
   onRemoteStart?: () => any;
   onRemoteReady?: (db: Database) => any;
 
-  backlog: string | undefined;
   syncChanges = syncChanges(this);
   // checkConnectivityClearBacklog = checkConnectivityClearBacklog(this);
   sync = sync(this);
@@ -102,7 +111,7 @@ export {
   JSONSchema,
   CollectionConfig,
   Collection,
-  isServerOnline,
+  pingServer,
   appRegister,
   devVerify,
   clearCollections,

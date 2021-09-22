@@ -1,6 +1,8 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "noUnusedLocals": false /* Report errors on unused locals. */,
+    "noUnusedParameters": false /* Report errors on unused parameters. */,
     "types": ["node", "jest"],
     "includes": ["src/**/*.spec.ts"],
     "exclude": ["node_modules/**"],

@@ -191,7 +191,7 @@ export const loginWithChallenge =
         // console.log('jwt', jwt);
         console.log('socket starting')
 
-        const socket = new WebSocket(self.WS_API);
+        const socket = new WebSocket(self.URL_API);
         /** Wait for our socket to open successfully */
         socket.onopen = async () => {
           console.log('socket open')

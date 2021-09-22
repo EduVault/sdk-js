@@ -1,12 +1,15 @@
 import { Database } from '@textile/threaddb';
+
 import { Credentials } from '../lib/credentials';
 
+export * from './api';
 export * from './model';
 
-/** suppressInit will only load the eduvaultHost into the API calls, toggle log (if provided) */
+/** suppressInit will only load the URL_API into the API calls, toggle log (if provided) */
 export interface initOptions {
   appID?: string;
-  eduvaultHost?: string;
+  URL_API?: string;
+  URL_APP?: string;
   suppressInit?: boolean;
   buttonID?: string;
   redirectURL?: string;

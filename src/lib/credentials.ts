@@ -1,12 +1,9 @@
 import { PrivateKey, ThreadID } from '@textile/threaddb';
 
 import { rehydratePrivateKey, testPrivateKey } from '../utils';
-import { utils } from '../utils';
+import { decrypt, encrypt } from '../utils';
 import { EduVault } from '../';
 // import { ulid } from 'ulid';
-
-const { decrypt, encrypt } = utils;
-
 export interface Credentials {
   privateKey: PrivateKey;
   threadID: ThreadID;
@@ -54,7 +51,7 @@ export const loadCredentials =
       const online = true;
       // console.log({ online})
       // if (!online) {
-      //   setTimeout(async () => (online = await self.isServerOnline()), 300);
+      //   setTimeout(async () => (online = await self.pingServer()), 300);
       // }
       const queries = new URL(window.location.href).searchParams;
 

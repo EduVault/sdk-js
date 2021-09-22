@@ -2,7 +2,7 @@
   "root": true,
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "sdk/js/tsconfig.json"
+    "project": "tsconfig.json"
   },
   "env": {
     "es6": true
@@ -13,7 +13,9 @@
     "dist",
     "coverage",
     "jest.config.ts",
-    "jest-env.js"
+    "jest-env.js",
+    "setupTests.ts",
+    "server.ts"
   ],
   "plugins": ["import", "eslint-comments"],
   "extends": [

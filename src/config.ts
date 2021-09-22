@@ -3,8 +3,8 @@ export const dev = NODE_ENV === 'development';
 export const unitTest = TEST_ENV === 'unit'; // no SSL
 export const e2eTest = TEST_ENV === 'e2e'; // no SSL (SSL through docker)
 
-/** Should be the same as in /api/src/config.ts */
-export const API_ROUTES = {
+/** MAKE SURE THESE MATCH eduvault/core/api/src/config.ts */
+export const ROUTES = {
   // implemented:
   /** GET */
   PING: '/ping',
@@ -37,12 +37,5 @@ export const API_ROUTES = {
   TEXTILE_RENEW: '/renew-textile',
 };
 
-const HTTP = 'http://';
-const HTTPS = 'https://';
-// const WSS = 'ws://';
-// const WS = 'ws://';
-export const formatURLApp = (host: string) => `${HTTP}${host}`;
-export const formatURLApi = (host: string) => `${HTTPS}${host}`;
-// export const formatWSApi = (host: string) =>
-// `${WSS}${host}:${PORT_API}/ws
-// `;
+export const URL_API = 'https://eduvault.org/api';
+export const URL_APP = 'https://eduvault.org/app/login'
