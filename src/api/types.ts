@@ -31,7 +31,7 @@ export interface PasswordLoginReq {
   pwEncryptedPrivateKey?: string;
   pubKey?: string;
   redirectURL?: string;
-  appID?: string;
+  appID: string;
   error?: string;
 }
 
