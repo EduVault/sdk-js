@@ -1,7 +1,8 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
 import { EduVault } from '../../index';
-import { ApiRes } from '../../types/api';
+
+import { ApiRes } from './types';
 
 type Methods = 'GET' | 'POST';
 

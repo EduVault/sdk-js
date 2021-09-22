@@ -1,7 +1,7 @@
 import { AsyncResponseResolverReturnType, MockedResponse, rest } from 'msw';
 
 import { URL_API } from '../../../config';
-import { ApiRes } from '../../../types/api';
+import { ApiRes } from '../types';
 
 export const getHandler = <T>(
   route: string,

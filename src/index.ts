@@ -33,7 +33,7 @@ import {
   // checkConnectivityClearBacklog,
   pingServer,
 } from './utils';
-
+export * from './types';
 class EduVault {
   // config variables
   URL_APP = URL_APP;

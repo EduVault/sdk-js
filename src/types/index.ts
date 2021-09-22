@@ -2,7 +2,7 @@ import { Database } from '@textile/threaddb';
 
 import { Credentials } from '../lib/credentials';
 
-export * from './api';
+export * from '../lib/api/types';
 export * from './model';
 
 /** suppressInit will only load the URL_API into the API calls, toggle log (if provided) */
@@ -21,4 +21,23 @@ export interface initOptions {
   onLocalReady?: (db: Database) => any;
   onRemoteStart?: () => any;
   onRemoteReady?: (db: Database) => any;
+}
+
+export type AuthType =
+  | 'google'
+  | 'facebook'
+  | 'dotwallet'
+  | 'password'
+  | 'metamask'
+  | 'default';
+
+export interface AuthState {
+  loggedIn: boolean;
+  authType: AuthType;
+  jwt?: string;
+  pubKey?: string;
+  privateKey?: string;
+  jwtEncryptedPrivateKey?: string;
+  threadID?: string;
+  threadIDStr?: string;
 }
