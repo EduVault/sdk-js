@@ -1,4 +1,5 @@
 import { EduVault } from '../';
+import { formatPreLoginFromExternalUrl } from '../utils';
 export interface LoginButtonOptions {
   buttonID: string;
   redirectURL?: string;
@@ -39,7 +40,11 @@ export const setupLoginButton =
     }
     try {
       if (!redirectURL) redirectURL = window.location.origin;
-      const loginURL = `${self.URL_APP}?app_id=${appID}&redirect_url=${redirectURL}`;
+      const loginURL = formatPreLoginFromExternalUrl({
+        URL_APP: self.URL_APP,
+        appID,
+        redirectURL,
+      });
       button.setAttribute('href', loginURL);
       if (onSuccess) onSuccess(loginURL);
       return { loginURL };

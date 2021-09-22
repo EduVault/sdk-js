@@ -35,7 +35,9 @@ export function decrypt(content: string, decryptKey: string) {
     const decryptedBytes = CryptoJS.AES.decrypt(decData, decryptKey).toString(
       CryptoJS.enc.Utf8
     );
-    return JSON.parse(decryptedBytes);
+    const decrypted = JSON.parse(decryptedBytes);
+    // console.log({ decrypted });
+    return decrypted;
   } catch (error) {
     console.log('decryption error', error);
     return false;

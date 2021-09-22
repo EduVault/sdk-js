@@ -1,6 +1,6 @@
 import { Database } from '@textile/threaddb';
 
-import { Credentials } from '../lib/credentials';
+import { Credentials } from '../lib/loadCredentials';
 
 export * from '../api/types';
 export * from './model';

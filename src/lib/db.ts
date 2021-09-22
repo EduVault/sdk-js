@@ -113,14 +113,14 @@ export const sync = (self: EduVault) => {
     console.log('starting sync', {
       syncSave: collectionName,
       remote: !!self.db?.remote,
-      online: await self.isOnline(),
+      online: self.online,
       debounceTime,
     });
     self.syncChanges<T>(collectionName);
 
     // redo offline support stuff,  backlog later
 
-    // if (!!self.db?.remote && (await self.isOnline())) {
+    // if (!!self.db?.remote && (await self.online())) {
     //   const syncToRemote = async () => {
     //     console.log('saving changes remotely');
     //     const changes = await self.syncChanges<T>(collectionName);
@@ -140,7 +140,7 @@ export const sync = (self: EduVault) => {
     //   return { error: 'offline' };
     // }
   };
-};
+};;
 
 export const syncChanges = (self: EduVault) => {
   return async <T>(collectionName: string) => {

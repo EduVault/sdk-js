@@ -5,17 +5,16 @@ import {
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
 
-import { apiGet, apiPost, apiReq } from './api';
+import { api } from './api';
 import { URL_API, URL_APP } from './config';
-import {
-  appLogin,
-  appRegister,
-  clearCollections,
-  devVerify,
-  getJWT,
-  personRegister,
-} from './lib/APICalls';
-import { Credentials, loadCredentials } from './lib/credentials';
+// import {
+//   appLogin,
+//   appRegister,
+//   clearCollections,
+//   devVerify,
+//   getJWT,
+//   personRegister,
+// } from './lib/APICalls';
 import {
   // debouncedSync,
   loginWithChallenge,
@@ -27,12 +26,11 @@ import {
   syncChanges,
 } from './lib/db';
 import { init } from './lib/init';
+import { Credentials, loadCredentials } from './lib/loadCredentials';
 import { setupLoginButton } from './lib/loginButton';
+import { pwLogin } from './lib/pwLogin';
 import { initOptions } from './types';
-import {
-  // checkConnectivityClearBacklog,
-  pingServer,
-} from './utils';
+
 export * from './types';
 export { startWorker } from './api/mocks/browser';
 class EduVault {
@@ -41,31 +39,29 @@ class EduVault {
   URL_API = URL_API;
 
   // init options
+  appID = '1'; // 1 is the default home app
   log? = false;
-  appID?: string;
   buttonID?: string;
   redirectURL?: string;
 
   // api
-  apiReq = apiReq(this);
-  apiGet = apiGet(this);
-  apiPost = apiPost(this);
-  pingServer = pingServer(this);
+  api = api(this);
 
   // helpers
-  isOnline = pingServer(this);
+  online = false;
   privateKeyValid = () => {
     return this.privateKey?.canSign();
   };
 
   // methods
-  personRegister = personRegister(this);
-  devVerify = devVerify(this);
-  clearCollections = clearCollections(this);
-  appRegister = appRegister(this);
-  appLogin = appLogin(this);
-  getJWT = getJWT(this);
-  setupLoginButton = setupLoginButton(this);
+  pwLogin = pwLogin(this);
+  // personRegister = personRegister(this);
+  // devVerify = devVerify(this);
+  // clearCollections = clearCollections(this);
+  // appRegister = appRegister(this);
+  // appLogin = appLogin(this);
+  // getJWT = getJWT(this);
+  // setupLoginButton = setupLoginButton(this);
   loadCredentials = loadCredentials(this);
   onLoadCredentialsStart?: () => any;
   onLoadCredentialsReady?: (credentials: Credentials) => any;
@@ -81,6 +77,7 @@ class EduVault {
   privateKey?: PrivateKey;
   threadID?: ThreadID | null;
   jwt?: string;
+  oldJwt?: string;
   remoteToken?: string;
 
   // db and db auth
@@ -112,14 +109,8 @@ export {
   JSONSchema,
   CollectionConfig,
   Collection,
-  pingServer,
-  appRegister,
-  devVerify,
-  clearCollections,
-  loadCredentials,
   setupLoginButton,
   startLocalDB,
   startRemoteDB,
   syncChanges,
-  personRegister,
 };

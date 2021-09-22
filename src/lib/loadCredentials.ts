@@ -2,7 +2,7 @@ import { PrivateKey, ThreadID } from '@textile/threaddb';
 
 import { rehydratePrivateKey, testPrivateKey } from '../utils';
 import { decrypt, encrypt } from '../utils';
-import { EduVault } from '../';
+import { EduVault } from '..';
 // import { ulid } from 'ulid';
 export interface Credentials {
   privateKey: PrivateKey;
@@ -35,7 +35,7 @@ export interface LoadCredentialsOptions {
  *    use jwt to get userAuth  (for now must be online. look into whether userAuth can be in localStorage too)
  *    userAuth to start DB */
 export const loadCredentials =
-  (self: EduVault) =>
+  (eduvault: EduVault) =>
   async ({
     redirectURL,
     appID,
@@ -47,11 +47,11 @@ export const loadCredentials =
   }: LoadCredentialsOptions) => {
     try {
       if (onStart) onStart();
-      // const online = await self.isOnline();
+      // const online = await eduvault.online();
       const online = true;
       // console.log({ online})
       // if (!online) {
-      //   setTimeout(async () => (online = await self.pingServer()), 300);
+      //   setTimeout(async () => (online = await eduvault.ping()), 300);
       // }
       const queries = new URL(window.location.href).searchParams;
 
@@ -104,7 +104,9 @@ export const loadCredentials =
 
       let jwts = null;
       if (online && returningLogin) {
-        jwts = await self.getJWT();
+        const jwtsCall = await eduvault.api.getJwt();
+        if ('error' in jwtsCall) throw 'could not get jwt';
+        jwts = jwtsCall.content;
         if (log) console.log({ jwts });
         if (jwtEncryptedPrivateKey && jwts && jwts.jwt && threadID && pubKey) {
           console.log({ jwtEncryptedPrivateKey, jwts });
@@ -120,7 +122,7 @@ export const loadCredentials =
             return { error: 'unable to decrypt keys' };
           }
 
-          const privateKey = await rehydratePrivateKey(keyStr);
+          const privateKey = rehydratePrivateKey(keyStr);
           console.log({ privateKey });
 
           //should we test the keys better? might require getting ID
@@ -153,7 +155,8 @@ export const loadCredentials =
           threadIDStr &&
           pwEncryptedPrivateKey
         ) {
-          const appLoginRes = await self.appLogin(appLoginToken, appID);
+          const appLoginRes = null;
+          // const appLoginRes = await eduvault.appLogin(appLoginToken, appID);
           if (!appLoginRes) {
             if (onError) onError('appLogin failed');
             return { error: 'appLogin failed' };
@@ -164,7 +167,7 @@ export const loadCredentials =
           let privateKey;
           try {
             keyStr = decrypt(encryptedPrivateKey, decryptToken);
-            privateKey = await rehydratePrivateKey(keyStr);
+            privateKey = rehydratePrivateKey(keyStr);
           } catch (error) {
             console.log();
           }

@@ -2,6 +2,8 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 import { EduVault } from '../index';
 
+import getJwt from './getJwt';
+import passwordLogin from './passwordLogin';
 import { ApiRes } from './types';
 
 type Methods = 'GET' | 'POST';
@@ -28,7 +30,7 @@ export const apiReq =
       };
       // console.log({ axiosOptions });
       const res = await axios(axiosOptions);
-      if (res.status < 200 || res.status >= 300) throw res;
+      if (!res.data || res.status < 200 || res.status >= 300) throw res;
       const resData: ApiRes<T> = res.data;
       // console.log({ resData, res });
       if (resData.code < 200 || resData.code >= 300) throw resData;
@@ -40,7 +42,7 @@ export const apiReq =
     }
   };
 /** @param route should start with slash */
-export const apiGet =
+export const get =
   (self: EduVault) =>
   async <T>(route: string, withCredentials = false) => {
     const req = apiReq(self);
@@ -48,16 +50,24 @@ export const apiGet =
   };
 
 /** @param route should start with slash */
-export const apiPost =
+export const post =
   (self: EduVault) =>
   async <T>(route: string, data: any, withCredentials = false) => {
     const req = apiReq(self);
     return await req<T>(route, 'POST', data, withCredentials);
   };
 
-export const pingServer = (self: EduVault) => async () => {
-  const res = await self.apiGet<'pong'>('/ping');
+export const ping = (self: EduVault) => async () => {
+  const res = await self.api.get<'pong'>('/ping');
   if (res instanceof Error) return false;
   if (res.code === 200 && res.content == 'pong') return true;
   return false;
 };
+
+export const api = (self: EduVault) => ({
+  get: get(self),
+  post: post(self),
+  ping: ping(self),
+  passwordLogin: passwordLogin(self),
+  getJwt: getJwt(self),
+});

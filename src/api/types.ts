@@ -25,14 +25,13 @@ export interface ApiRes<T> {
   code: number;
 }
 export interface PasswordLoginReq {
-  username?: string;
-  password?: string;
+  username: string;
+  password: string;
+  appID: string;
   threadIDStr?: string;
   pwEncryptedPrivateKey?: string;
   pubKey?: string;
   redirectURL?: string;
-  appID: string;
-  error?: string;
 }
 
 export interface PasswordLoginRes {
@@ -40,8 +39,13 @@ export interface PasswordLoginRes {
   jwt: string;
   pubKey: string;
   threadIDStr: string;
-  appLoginToken?: string;
-  decryptToken?: string;
+  appLoginToken: string;
+  decryptToken: string;
+}
+
+export interface GetJWTRes {
+  jwt: string;
+  oldJwt: string;
 }
 
 export interface AppAuthReq {

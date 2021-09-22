@@ -8,98 +8,99 @@ import { initOptions } from '../types';
  *  2a. Checks queries to see if returning from a login. If so, starts DB
  *  2b. If credentials were found, starts DB
  * */
-export const init = async (self: EduVault, options: initOptions) => {
-  if (options.appID) self.appID = options.appID;
-  if (options.buttonID) self.buttonID = options.buttonID;
-  if (options.redirectURL) self.redirectURL = options.redirectURL;
-  self.log = options.log;
+export const init = async (eduvault: EduVault, options: initOptions) => {
+  eduvault.online = await eduvault.api.ping();
+  if (options.appID) eduvault.appID = options.appID;
+  if (options.buttonID) eduvault.buttonID = options.buttonID;
+  if (options.redirectURL) eduvault.redirectURL = options.redirectURL;
+  eduvault.log = options.log;
   if (options.onLoadCredentialsStart)
-    self.onLoadCredentialsStart = options.onLoadCredentialsStart;
-  if (options.onLoadCredentialsReady)
-    self.onLoadCredentialsReady = options.onLoadCredentialsReady;
+    eduvault.onLoadCredentialsStart = options.onLoadCredentialsStart;
+  // if (options.onLoadCredentialsReady)
+  //   eduvault.onLoadCredentialsReady = options.onLoadCredentialsReady;
   if (options.onLoadCredentialsError)
-    self.onLoadCredentialsError = options.onLoadCredentialsError;
-  if (options.onLocalReady) self.onLocalReady = options.onLocalReady;
-  if (options.onLocalStart) self.onLocalStart = options.onLocalStart;
-  if (options.onRemoteStart) self.onRemoteStart = options.onRemoteStart;
-  if (options.onRemoteReady) self.onRemoteReady = options.onRemoteReady;
-  if (options.URL_API) self.URL_API = options.URL_API;
-  if (options.URL_APP) self.URL_APP = options.URL_APP;
+    eduvault.onLoadCredentialsError = options.onLoadCredentialsError;
+  if (options.onLocalReady) eduvault.onLocalReady = options.onLocalReady;
+  if (options.onLocalStart) eduvault.onLocalStart = options.onLocalStart;
+  if (options.onRemoteStart) eduvault.onRemoteStart = options.onRemoteStart;
+  if (options.onRemoteReady) eduvault.onRemoteReady = options.onRemoteReady;
+  if (options.URL_API) eduvault.URL_API = options.URL_API;
+  if (options.URL_APP) eduvault.URL_APP = options.URL_APP;
   if (options.log) console.log({ options });
-  if (self.buttonID) {
-    self.setupLoginButton({
-      buttonID: self.buttonID,
-      redirectURL: self.redirectURL,
-      appID: self.appID,
-      log: self.log,
-    });
-  }
+  // if (eduvault.buttonID) {
+  //   eduvault.setupLoginButton({
+  //     buttonID: eduvault.buttonID,
+  //     redirectURL: eduvault.redirectURL,
+  //     appID: eduvault.appID,
+  //     log: eduvault.log,
+  //   });
+  // }
   if (!options.suppressInit) {
-    const loadResult = await self.loadCredentials({
+    const loadResult = await eduvault.loadCredentials({
       onStart: () => {
-        self.loadingStatus = 'Getting credentials';
-        if (self.onLoadCredentialsStart) self.onLoadCredentialsStart();
+        eduvault.loadingStatus = 'Getting credentials';
+        if (eduvault.onLoadCredentialsStart) eduvault.onLoadCredentialsStart();
       },
       onReady: (credentials) => {
-        self.loadingStatus = 'Got database credentials';
-        if (self.onLoadCredentialsReady)
-          self.onLoadCredentialsReady(credentials);
+        eduvault.loadingStatus = 'Got database credentials';
+        if (eduvault.onLoadCredentialsReady)
+          eduvault.onLoadCredentialsReady(credentials);
       },
       onError: (error) => {
-        if (self.onLoadCredentialsError) self.onLoadCredentialsError(error);
+        if (eduvault.onLoadCredentialsError) eduvault.onLoadCredentialsError(error);
       },
-      appID: self.appID,
-      redirectURL: self.redirectURL,
-      log: self.log,
+      appID: eduvault.appID,
+      redirectURL: eduvault.redirectURL,
+      log: eduvault.log,
     });
-    if (self.log) console.log({ loadResult });
+    if (eduvault.log) console.log({ loadResult });
     if (loadResult.error) {
       return { error: loadResult.error };
     }
     if (loadResult.privateKey && loadResult.threadID && loadResult.jwt) {
-      self.privateKey = loadResult.privateKey;
-      self.threadID = loadResult.threadID;
-      self.jwt = loadResult.jwt;
+      eduvault.privateKey = loadResult.privateKey;
+      eduvault.threadID = loadResult.threadID;
+      eduvault.jwt = loadResult.jwt;
 
-      const db = await self.startLocalDB({
+      const db = await eduvault.startLocalDB({
         onStart: () => {
-          self.loadingStatus = 'Starting local database';
-          if (self.onLocalStart) self.onLocalStart();
+          eduvault.loadingStatus = 'Starting local database';
+          if (eduvault.onLocalStart) eduvault.onLocalStart();
         },
         onReady: (db) => {
-          self.loadingStatus = 'Local database ready';
-          if (self.onLocalReady) self.onLocalReady(db);
+          eduvault.loadingStatus = 'Local database ready';
+          if (eduvault.onLocalReady) eduvault.onLocalReady(db);
         },
         collectionConfig: deckSchemaConfig,
       });
       if ('error' in db) return { error: db.error };
-      if (!self.jwt) return { error: 'jwt not found' };
+      if (!eduvault.jwt) return { error: 'jwt not found' };
       else {
-        self.db = db;
-        self.isLocalReady = true;
-        const remoteStart = await self.startRemoteRaw({
+        eduvault.db = db;
+        eduvault.isLocalReady = true;
+        const remoteStart = await eduvault.startRemoteRaw({
           onStart: () => {
-            self.loadingStatus = 'Starting remote database';
-            if (self.onRemoteStart) self.onRemoteStart();
+            eduvault.loadingStatus = 'Starting remote database';
+            if (eduvault.onRemoteStart) eduvault.onRemoteStart();
           },
           onReady: (db) => {
-            self.loadingStatus = 'Remote database ready';
-            if (self.onRemoteReady) self.onRemoteReady(db);
+            eduvault.loadingStatus = 'Remote database ready';
+            if (eduvault.onRemoteReady) eduvault.onRemoteReady(db);
           },
-          db: self.db,
-          threadID: self.threadID,
-          jwt: self.jwt,
-          privateKey: self.privateKey,
+          db: eduvault.db,
+          threadID: eduvault.threadID,
+          jwt: eduvault.jwt,
+          privateKey: eduvault.privateKey,
         });
         console.log({ remoteStart });
         if ('error' in remoteStart) return { error: remoteStart.error };
         else {
-          self.db = remoteStart.db;
-          self.remoteToken = remoteStart.token;
-          console.log({ remoteToken: self.remoteToken });
-          return self.db;
+          eduvault.db = remoteStart.db;
+          eduvault.remoteToken = remoteStart.token;
+          console.log({ remoteToken: eduvault.remoteToken });
+          return eduvault.db;
         }
       }
     } else return { error: loadResult };
   } else return { error: 'Init Suppressed' };
-};
+};;
