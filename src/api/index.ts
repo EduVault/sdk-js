@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
-import { EduVault } from '../../index';
+import { EduVault } from '../index';
 
 import { ApiRes } from './types';
 

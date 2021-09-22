@@ -2,7 +2,7 @@ import { Database } from '@textile/threaddb';
 
 import { Credentials } from '../lib/credentials';
 
-export * from '../lib/api/types';
+export * from '../api/types';
 export * from './model';
 
 /** suppressInit will only load the URL_API into the API calls, toggle log (if provided) */
