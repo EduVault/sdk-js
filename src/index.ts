@@ -5,7 +5,7 @@ import {
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
 import { URL_API, URL_APP } from './config';
-import { apiGet, apiPost, apiReq } from './lib/api';
+import { apiGet, apiPost, apiReq } from './api';
 
 import {
   appLogin,
@@ -34,7 +34,7 @@ import {
   pingServer,
 } from './utils';
 export * from './types';
-export { startWorker } from './lib/api/mocks/browser';
+export { startWorker } from './api/mocks/browser';
 class EduVault {
   // config variables
   URL_APP = URL_APP;
