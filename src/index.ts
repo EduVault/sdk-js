@@ -4,9 +4,9 @@ import {
   Collection,
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
-import { URL_API, URL_APP } from './config';
-import { apiGet, apiPost, apiReq } from './api';
 
+import { apiGet, apiPost, apiReq } from './api';
+import { URL_API, URL_APP } from './config';
 import {
   appLogin,
   appRegister,
