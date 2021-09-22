@@ -18,8 +18,11 @@ jobs:
       - name: Install application
         run: npm i
 
+      - name: Build application
+        run: npm run build
+
       - name: Unit Test
-        uses: npm run test
+        run: npm run test
 
   build-and-push-production-images:
     if: github.ref == 'refs/heads/main'
@@ -30,4 +33,4 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Publish
-        uses: npm publish
+        run: npm publish
