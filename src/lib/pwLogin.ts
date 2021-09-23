@@ -59,6 +59,7 @@ const handlePasswordSignInResponse = async (loginRes: {
   pubKey: string;
   decryptToken: string;
   password: string;
+  jwt: string;
 }) => {
   const {
     eduvault,
@@ -67,6 +68,7 @@ const handlePasswordSignInResponse = async (loginRes: {
     threadIDStr,
     pubKey,
     decryptToken,
+    jwt,
   } = loginRes;
 
   const retrievePrivateKey = async (
@@ -80,12 +82,12 @@ const handlePasswordSignInResponse = async (loginRes: {
       throw 'Could not retrieve PrivateKey';
     return retrievedKey;
   };
-  const getJwts = async () => {
-    const jwts = await eduvault.api.getJwt();
-    if (!jwts || 'error' in jwts || !jwts.content.jwt)
-      throw 'could not get jwt';
-    return jwts.content;
-  };
+  // const getJwts = async () => {
+  //   const jwts = await eduvault.api.getJwt();
+  //   if (!jwts || 'error' in jwts || !jwts.content.jwt)
+  //     throw 'could not get jwt';
+  //   return jwts.content;
+  // };
   const encryptPrivKeyWithJwt = (privateKey: PrivateKey, jwt: string) => {
     const jwtEncryptedPrivateKey = encrypt(privateKey.toString(), jwt);
     if (!jwtEncryptedPrivateKey)
@@ -102,7 +104,7 @@ const handlePasswordSignInResponse = async (loginRes: {
   };
 
   const privateKey = await retrievePrivateKey(pwEncryptedPrivateKey, password);
-  const { jwt, oldJwt } = await getJwts();
+  // const { jwt, oldJwt } = await getJwts();
   const jwtEncryptedPrivateKey = encryptPrivKeyWithJwt(privateKey, jwt);
   const encryptedPrivateKey = encryptPrivKeyWithDecryptToken(
     privateKey,
@@ -117,7 +119,7 @@ const handlePasswordSignInResponse = async (loginRes: {
     pubKey,
     authType: 'password',
   });
-  storeNonPersistentAuthData({ eduvault, privateKey, jwt, oldJwt, threadID });
+  storeNonPersistentAuthData({ eduvault, privateKey, jwt, threadID });
 
   return encryptedPrivateKey;
 };
