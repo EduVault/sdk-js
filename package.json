@@ -1,11 +1,13 @@
 {
   "name": "@eduvault/sdk-js",
-  "version": "0.0.1",
-  "description": "An SDK that allows app creators to quickly create and authenticate a user-owned database",
+  "version": "0.0.2",
+  "private": false,
+  "access": "public",
+  "description": "Quickly create and authenticate a user-owned database",
   "main": "dist/main/index.js",
   "typings": "dist/main/index.d.ts",
   "module": "dist/module/index.js",
-  "repository": "https://github.com/eduvault/eduvault",
+  "repository": "https://github.com/eduvault/sdk-js",
   "license": "MIT",
   "keywords": [],
   "scripts": {
