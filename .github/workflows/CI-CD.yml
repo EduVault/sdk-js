@@ -15,8 +15,8 @@ jobs:
           node-version: '14.x'
           cache: 'npm'
 
-      - name: Install application
-        run: npm i
+      - name: Install npm run all
+        run: npm i npm-run-all
 
       - name: Build application
         run: npm run build
