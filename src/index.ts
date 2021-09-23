@@ -33,7 +33,7 @@ import { initOptions } from './types';
 
 export * from './types';
 export { startWorker } from './api/mocks/browser';
-export { server as mockServer } from './api/mocks/server';
+export { startServer as mockServer } from './api/mocks/server';
 class EduVault {
   // config variables
   URL_APP = URL_APP;
