@@ -15,8 +15,8 @@ jobs:
           node-version: '14.x'
           cache: 'npm'
 
-      - name: Install npm run all
-        run: npm i npm-run-all
+      - name: Install 
+        run: npm i
 
       - name: Build application
         run: npm run build
@@ -40,6 +40,9 @@ jobs:
 
       - name: Install application
         run: npm run inst
+        
+      - name: Build application
+        run: npm run build      
 
       - uses: JS-DevTools/npm-publish@v1
         with:
