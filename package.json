@@ -1,6 +1,6 @@
 {
   "name": "@eduvault/eduvault-js",
-  "version": "1.3.02",
+  "version": "1.3.03",
   "description": "An SDK that allows app creators to quickly create and authenticate a user-owned database",
   "main": "dist/main/index.js",
   "typings": "dist/main/index.d.ts",
