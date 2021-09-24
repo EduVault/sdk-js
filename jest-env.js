@@ -22,5 +22,5 @@ module.exports = class CustomTestEnvironment extends Environment {
   }
 };
 process.env = {
-  TEST_ENV: 'unit',
+  EV_SDK_TEST_ENV: 'unit',
 };
