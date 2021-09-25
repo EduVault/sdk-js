@@ -45,7 +45,7 @@ export interface StartRemoteDBOptions {
 }
 
 export const startRemoteDB =
-  (self: EduVault) =>
+  (eduvault: EduVault) =>
   async ({
     db,
     threadID,
@@ -57,7 +57,7 @@ export const startRemoteDB =
     try {
       if (onStart) onStart();
       console.log({ db, threadID, privateKey });
-      const getUserAuth = self.loginWithChallenge(jwt, privateKey);
+      const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
       const userAuth = await getUserAuth();
       // console.log({ userAuth });
 
@@ -108,26 +108,25 @@ export const startRemoteDB =
     }
   };
 
-export const sync = (self: EduVault) => {
+export const sync = (eduvault: EduVault) => {
   return async <T>(collectionName: Collection['name'], debounceTime = 500) => {
     console.log('starting sync', {
       syncSave: collectionName,
-      remote: !!self.db?.remote,
-      online: self.online,
+      remote: !!eduvault.db?.remote,
       debounceTime,
     });
-    self.syncChanges<T>(collectionName);
+    eduvault.syncChanges<T>(collectionName);
 
     // redo offline support stuff,  backlog later
 
-    // if (!!self.db?.remote && (await self.online())) {
+    // if (!!eduvault.db?.remote && (await eduvault.online())) {
     //   const syncToRemote = async () => {
     //     console.log('saving changes remotely');
-    //     const changes = await self.syncChanges<T>(collectionName);
+    //     const changes = await eduvault.syncChanges<T>(collectionName);
     //     console.log({ changes });
     //     if ('error' in changes) return changes;
     //     else {
-    //       self.backlog = undefined;
+    //       eduvault.backlog = undefined;
     //       return changes;
     //     }
     //   };
@@ -135,27 +134,27 @@ export const sync = (self: EduVault) => {
     //   return debouncedSync();
     // } else {
     //   console.log('adding to backlog');
-    //   self.backlog = collectionName;
-    //   self.checkConnectivityClearBacklog();
+    //   eduvault.backlog = collectionName;
+    //   eduvault.checkConnectivityClearBacklog();
     //   return { error: 'offline' };
     // }
   };
-};;
+};
 
-export const syncChanges = (self: EduVault) => {
+export const syncChanges = (eduvault: EduVault) => {
   return async <T>(collectionName: string) => {
     console.log('starting debounced sync');
     try {
-      const remote = self.db?.remote;
+      const remote = eduvault.db?.remote;
       if (!remote) throw 'no remote found';
-      const localInstances = await self?.db
+      const localInstances = await eduvault?.db
         ?.collection<T>(collectionName)
         ?.find()
         .sortBy('_id');
-      self.isSyncing = true;
+      eduvault.isSyncing = true;
       await remote.createStash();
       await remote.pull(collectionName);
-      const remoteInstances = await self?.db
+      const remoteInstances = await eduvault?.db
         ?.collection<T>(collectionName)
         ?.find()
         .sortBy('_id');
@@ -167,7 +166,7 @@ export const syncChanges = (self: EduVault) => {
         console.log({ remoteDiffs, localDiffs });
       }
       await remote.applyStash(collectionName);
-      const afterApplyStash = await self?.db
+      const afterApplyStash = await eduvault?.db
         ?.collection<T>(collectionName)
         ?.find()
         .sortBy('_id');
@@ -181,7 +180,7 @@ export const syncChanges = (self: EduVault) => {
 };
 
 export const loginWithChallenge =
-  (self: EduVault) =>
+  (eduvault: EduVault) =>
   (jwt: string, privateKey: PrivateKey): (() => Promise<PersonAuth>) => {
     // we pass identity into the function returning function to make it
     // available later in the callback
@@ -189,12 +188,12 @@ export const loginWithChallenge =
       return new Promise((resolve, reject) => {
         /** Initialize our websocket connection */
         // console.log('jwt', jwt);
-        console.log('socket starting')
+        console.log('socket starting');
 
-        const socket = new WebSocket(self.URL_API);
+        const socket = new WebSocket(eduvault.URL_API);
         /** Wait for our socket to open successfully */
         socket.onopen = async () => {
-          console.log('socket open')
+          console.log('socket open');
           if (!jwt || jwt === '') throw { error: 'no jwt' };
           if (!privateKey) throw { error: 'no privateKey' };
           socket.send(
@@ -246,23 +245,23 @@ export const loginWithChallenge =
     };
   };
 
-export const startRemoteWrapped = (self: EduVault) => {
+export const startRemoteWrapped = (eduvault: EduVault) => {
   return async (options: StartRemoteDBOptions) => {
-    const remoteStart = await self.startRemoteRaw(options);
+    const remoteStart = await eduvault.startRemoteRaw(options);
     if ('error' in remoteStart) return { error: remoteStart.error };
     else {
-      self.remoteToken = remoteStart.token;
-      self.db = remoteStart.db;
-      return self.db;
+      eduvault.remoteToken = remoteStart.token;
+      eduvault.db = remoteStart.db;
+      return eduvault.db;
     }
   };
 };
-export const startLocalWrapped = (self: EduVault) => {
+export const startLocalWrapped = (eduvault: EduVault) => {
   return async (options: StartLocalDBOptions) => {
     const db = await startLocalDB(options);
     if ('error' in db) return { error: db.error };
     else {
-      self.db = db;
+      eduvault.db = db;
       return db;
     }
   };

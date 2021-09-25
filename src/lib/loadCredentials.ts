@@ -43,7 +43,7 @@ export const loadCredentials =
   }: LoadCredentialsOptions) => {
     try {
       if (onStart) onStart();
-      const online = eduvault.online;
+      const online = await eduvault.api.ping();
       console.log({ online });
       // if (!online) {
       //   setTimeout(async () => (online = await eduvault.ping()), 300);
