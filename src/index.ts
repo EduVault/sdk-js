@@ -49,7 +49,6 @@ class EduVault {
   api = api(this);
 
   // helpers
-  online = false;
   privateKeyValid = () => {
     return this.privateKey?.canSign();
   };
@@ -96,10 +95,8 @@ class EduVault {
   // checkConnectivityClearBacklog = checkConnectivityClearBacklog(this);
   sync = sync(this);
 
-  constructor(options?: initOptions) {
-    if (options) {
-      init(this, options);
-    }
+  constructor(options: initOptions) {
+    init(this, options);
   }
 }
 export default EduVault;

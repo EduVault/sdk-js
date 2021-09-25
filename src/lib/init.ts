@@ -8,17 +8,14 @@ import { initOptions } from '../types';
  *  2a. Checks queries to see if returning from a login. If so, starts DB
  *  2b. If credentials were found, starts DB
  * */
-export const init = async (eduvault: EduVault, options: initOptions) => {
+export const init = (eduvault: EduVault, options: initOptions) => {
   eduvault.appID = options.appID;
-  
+
   eduvault.log = options.log;
   if (options.log) console.log({ options });
 
   if (options.URL_API) eduvault.URL_API = options.URL_API;
   if (options.URL_APP) eduvault.URL_APP = options.URL_APP;
-
-  eduvault.online = await eduvault.api.ping();
-
 
   // move load credentials to a method explicitly called
   // if (options.onLoadCredentialsStart)
@@ -32,7 +29,6 @@ export const init = async (eduvault: EduVault, options: initOptions) => {
   // if (options.onLocalStart) eduvault.onLocalStart = options.onLocalStart;
   // if (options.onRemoteStart) eduvault.onRemoteStart = options.onRemoteStart;
   // if (options.onRemoteReady) eduvault.onRemoteReady = options.onRemoteReady;
-
 
   // move createButton to method
   // if (options.buttonID) eduvault.buttonID = options.buttonID;
