@@ -1,5 +1,5 @@
 import EduVault from '..';
-const eduvault = new EduVault({ suppressInit: true });
+const eduvault = new EduVault({ appID: '1' });
 
 test('getJwt', async () => {
   const res = await eduvault.api.getJwt();

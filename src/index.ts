@@ -26,7 +26,7 @@ import {
   syncChanges,
 } from './lib/db';
 import { init } from './lib/init';
-import { Credentials, loadCredentials } from './lib/loadCredentials';
+import { Credentials, loadCredentials as load } from './lib/loadCredentials';
 import { setupLoginButton } from './lib/loginButton';
 import { pwLogin } from './lib/pwLogin';
 import { initOptions } from './types';
@@ -63,10 +63,10 @@ class EduVault {
   // appLogin = appLogin(this);
   // getJWT = getJWT(this);
   // setupLoginButton = setupLoginButton(this);
-  loadCredentials = loadCredentials(this);
-  onLoadCredentialsStart?: () => any;
-  onLoadCredentialsReady?: (credentials: Credentials) => any;
-  onLoadCredentialsError?: (error: string) => any;
+  load = load(this);
+  onLoadStart?: () => any;
+  onLoadReady?: (credentials: Credentials) => any;
+  onLoadError?: (error: string) => any;
 
   // status
   loadingStatus = 'not started';

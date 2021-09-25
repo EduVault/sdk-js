@@ -14,8 +14,6 @@ export interface LoadCredentialsOptions {
   onStart?: () => any;
   onReady?: (credentials: Credentials) => any;
   onError?: (error: string) => any;
-  redirectURL?: string;
-  appID?: string;
   log?: boolean;
 }
 
@@ -37,8 +35,6 @@ export interface LoadCredentialsOptions {
 export const loadCredentials =
   (eduvault: EduVault) =>
   async ({
-    redirectURL,
-    appID,
     log = false,
 
     onStart,
@@ -47,13 +43,13 @@ export const loadCredentials =
   }: LoadCredentialsOptions) => {
     try {
       if (onStart) onStart();
-      // const online = await eduvault.online();
-      const online = true;
-      // console.log({ online})
+      const online = eduvault.online;
+      console.log({ online });
       // if (!online) {
       //   setTimeout(async () => (online = await eduvault.ping()), 300);
       // }
       const queries = new URL(window.location.href).searchParams;
+      const appID = eduvault.appID;
 
       /** Returning login */
       // should also have threadID, pubKey, etc. (check app)
@@ -91,7 +87,6 @@ export const loadCredentials =
         queries.forEach((val, key) => console.log(key + ': ' + val));
         console.log({
           appID,
-          redirectURL,
           online,
           threadIDStr,
           threadID,

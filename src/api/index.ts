@@ -8,14 +8,15 @@ import { ApiRes } from './types';
 
 type Methods = 'GET' | 'POST';
 
-export const apiReq =
-  (self: EduVault) =>
-  async <T>(
+
+
+export const apiReq = (self: EduVault) =>
+  async function <T>(
     route: string,
     method: Methods,
     data?: any,
     withCredentials = false
-  ) => {
+  ) {
     try {
       const axiosOptions: AxiosRequestConfig = {
         url: self.URL_API + route,

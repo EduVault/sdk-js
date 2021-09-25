@@ -23,34 +23,74 @@ export const pwLogin =
     username: string;
     redirectURL: string;
   }) => {
-    const appID = eduvault.appID;
+    try {
+      const appID = eduvault.appID;
 
-    const loginData = await formatPasswordSignIn({
-      username,
-      password,
-      redirectURL,
-      appID,
-    });
+      const loginData = await formatPasswordSignIn({
+        username,
+        password,
+        redirectURL,
+        appID,
+      });
 
-    const loginRes = await eduvault.api.passwordLogin(loginData);
-    if ('error' in loginRes) return console.log({ error: loginRes.error });
+      const loginRes = await eduvault.api.passwordLogin(loginData);
+      if ('error' in loginRes) return console.log({ error: loginRes.error });
 
-    const encryptedPrivateKey = await handlePasswordSignInResponse({
-      eduvault,
-      ...loginRes.content,
-      password,
-    });
+      const encryptedPrivateKey = await handlePasswordSignInResponse({
+        eduvault,
+        ...loginRes.content,
+        password,
+      });
 
-    const redirectUrlWithQueries = formatPostLoginRedirectURL({
-      redirectURL,
-      encryptedPrivateKey,
-      ...loginRes.content,
-    });
+      const redirectUrlWithQueries = formatPostLoginRedirectURL({
+        redirectURL,
+        encryptedPrivateKey,
+        ...loginRes.content,
+      });
 
-    window.location.assign(redirectUrlWithQueries);
+      window.location.assign(redirectUrlWithQueries);
 
-    return { ...loginRes.content, encryptedPrivateKey, redirectUrlWithQueries };
+      return {
+        ...loginRes.content,
+        encryptedPrivateKey,
+        redirectUrlWithQueries,
+      };
+    } catch (error) {
+      return { error };
+    }
   };
+
+const retrievePrivateKey = async (
+  pwEncryptedPrivateKey: string,
+  password: string,
+  pubKey: string
+) => {
+  const keyStr = decrypt(pwEncryptedPrivateKey, password);
+  if (!keyStr) throw 'Could not decrypt PrivateKey';
+  const retrievedKey = rehydratePrivateKey(keyStr);
+  if (!retrievedKey || !testPrivateKey(retrievedKey, pubKey))
+    throw 'Could not retrieve PrivateKey';
+  return retrievedKey;
+};
+// const getJwts = async () => {
+//   const jwts = await eduvault.api.getJwt();
+//   if (!jwts || 'error' in jwts || !jwts.content.jwt)
+//     throw 'could not get jwt';
+//   return jwts.content;
+// };
+const encryptPrivKeyWithJwt = (privateKey: PrivateKey, jwt: string) => {
+  const jwtEncryptedPrivateKey = encrypt(privateKey.toString(), jwt);
+  if (!jwtEncryptedPrivateKey) throw 'error encrypting jwtEncryptedPrivateKey';
+  return jwtEncryptedPrivateKey;
+};
+const encryptPrivKeyWithDecryptToken = (
+  privateKey: PrivateKey,
+  decryptToken: string
+) => {
+  const encryptedPrivateKey = encrypt(privateKey.toString(), decryptToken);
+  if (!encryptedPrivateKey) throw 'error encrypting encryptedPrivateKey';
+  return encryptedPrivateKey;
+};
 
 const handlePasswordSignInResponse = async (loginRes: {
   eduvault: EduVault;
@@ -71,39 +111,11 @@ const handlePasswordSignInResponse = async (loginRes: {
     jwt,
   } = loginRes;
 
-  const retrievePrivateKey = async (
-    pwEncryptedPrivateKey: string,
-    password: string
-  ) => {
-    const keyStr = decrypt(pwEncryptedPrivateKey, password);
-    if (!keyStr) throw 'Could not decrypt PrivateKey';
-    const retrievedKey = rehydratePrivateKey(keyStr);
-    if (!retrievedKey || !testPrivateKey(retrievedKey, pubKey))
-      throw 'Could not retrieve PrivateKey';
-    return retrievedKey;
-  };
-  // const getJwts = async () => {
-  //   const jwts = await eduvault.api.getJwt();
-  //   if (!jwts || 'error' in jwts || !jwts.content.jwt)
-  //     throw 'could not get jwt';
-  //   return jwts.content;
-  // };
-  const encryptPrivKeyWithJwt = (privateKey: PrivateKey, jwt: string) => {
-    const jwtEncryptedPrivateKey = encrypt(privateKey.toString(), jwt);
-    if (!jwtEncryptedPrivateKey)
-      throw 'error encrypting jwtEncryptedPrivateKey';
-    return jwtEncryptedPrivateKey;
-  };
-  const encryptPrivKeyWithDecryptToken = (
-    privateKey: PrivateKey,
-    decryptToken: string
-  ) => {
-    const encryptedPrivateKey = encrypt(privateKey.toString(), decryptToken);
-    if (!encryptedPrivateKey) throw 'error encrypting encryptedPrivateKey';
-    return encryptedPrivateKey;
-  };
-
-  const privateKey = await retrievePrivateKey(pwEncryptedPrivateKey, password);
+  const privateKey = await retrievePrivateKey(
+    pwEncryptedPrivateKey,
+    password,
+    pubKey
+  );
   // const { jwt, oldJwt } = await getJwts();
   const jwtEncryptedPrivateKey = encryptPrivKeyWithJwt(privateKey, jwt);
   const encryptedPrivateKey = encryptPrivKeyWithDecryptToken(

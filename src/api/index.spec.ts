@@ -1,5 +1,5 @@
 import EduVault from '..';
-const eduvault = new EduVault({ suppressInit: true });
+const eduvault = new EduVault({ appID: '1' });
 
 test('get', async () => {
   // can get data from a response
