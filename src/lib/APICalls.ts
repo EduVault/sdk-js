@@ -13,7 +13,7 @@
 // import { EduVault } from '../index';
 
 // export const personRegister =
-//   (self: EduVault) =>
+//   (eduvault: EduVault) =>
 //   async (options: {
 //     username: string | undefined;
 //     password: string | undefined;
@@ -25,7 +25,7 @@
 //       if (pwSigninData.error) throw pwSigninData.error;
 //       const postData: PasswordLoginReq = pwSigninData;
 //       const axiosOptions: AxiosRequestConfig = {
-//         url: self.URL_API + ROUTES.PASSWORD_AUTH,
+//         url: eduvault.URL_API + ROUTES.PASSWORD_AUTH,
 //         headers: {
 //           'Content-Type': 'application/json',
 //           'X-Forwarded-Proto': 'https',
@@ -45,11 +45,11 @@
 //   };
 
 // export const devVerify =
-//   (self: EduVault) => async (appSecret: string, devID: string) => {
+//   (eduvault: EduVault) => async (appSecret: string, devID: string) => {
 //     try {
 //       const postData: DevVerifyReq = { appSecret, devID };
 //       const options: AxiosRequestConfig = {
-//         url: self.URL_API + ROUTES.DEV_VERIFY,
+//         url: eduvault.URL_API + ROUTES.DEV_VERIFY,
 //         headers: {
 //           'Content-Type': 'application/json',
 //           'X-Forwarded-Proto': 'https',
@@ -67,11 +67,11 @@
 //     }
 //   };
 // export const clearCollections =
-//   (self: EduVault) => async (appSecret: string) => {
+//   (eduvault: EduVault) => async (appSecret: string) => {
 //     try {
 //       const postData = { appSecret };
 //       const options: AxiosRequestConfig = {
-//         url: self.URL_API + '/drop-collections',
+//         url: eduvault.URL_API + '/drop-collections',
 //         headers: {
 //           'Content-Type': 'application/json',
 //           'X-Forwarded-Proto': 'https',
@@ -89,7 +89,7 @@
 //     }
 //   };
 // export const appRegister =
-//   (self: EduVault) =>
+//   (eduvault: EduVault) =>
 //   async (
 //     username: string,
 //     password: string,
@@ -106,7 +106,7 @@
 //         appID,
 //       };
 //       const options: AxiosRequestConfig = {
-//         url: self.URL_API + ROUTES.APP_REGISTER,
+//         url: eduvault.URL_API + ROUTES.APP_REGISTER,
 //         withCredentials: true,
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -128,11 +128,11 @@
 //   };
 
 // export const appLogin =
-//   (self: EduVault) => async (appLoginToken: string, appID: string) => {
+//   (eduvault: EduVault) => async (appLoginToken: string, appID: string) => {
 //     try {
 //       const data: AppAuthReq = { appLoginToken, appID };
 //       const options: AxiosRequestConfig = {
-//         url: self.URL_API + '/auth/app',
+//         url: eduvault.URL_API + '/auth/app',
 //         withCredentials: true,
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -152,10 +152,10 @@
 //     }
 //   };
 
-// export const getJWT = (self: EduVault) => async () => {
+// export const getJWT = (eduvault: EduVault) => async () => {
 //   try {
 //     const options: AxiosRequestConfig = {
-//       url: self.URL_API + ROUTES.GET_JWT,
+//       url: eduvault.URL_API + ROUTES.GET_JWT,
 //       withCredentials: true,
 //       headers: {
 //         'X-Forwarded-Proto': 'https',

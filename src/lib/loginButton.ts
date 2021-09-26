@@ -12,7 +12,7 @@ export interface LoginButtonOptions {
  * @param buttonID must be an <a> element
  */
 export const setupLoginButton =
-  (self: EduVault) =>
+  (eduvault: EduVault) =>
   ({
     buttonID,
     redirectURL,
@@ -41,7 +41,7 @@ export const setupLoginButton =
     try {
       if (!redirectURL) redirectURL = window.location.origin;
       const loginURL = formatPreLoginFromExternalUrl({
-        URL_APP: self.URL_APP,
+        URL_APP: eduvault.URL_APP,
         appID,
         redirectURL,
       });

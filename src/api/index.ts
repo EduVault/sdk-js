@@ -10,7 +10,7 @@ type Methods = 'GET' | 'POST';
 
 
 
-export const apiReq = (self: EduVault) =>
+export const apiReq = (eduvault: EduVault) =>
   async function <T>(
     route: string,
     method: Methods,
@@ -19,7 +19,7 @@ export const apiReq = (self: EduVault) =>
   ) {
     try {
       const axiosOptions: AxiosRequestConfig = {
-        url: self.URL_API + route,
+        url: eduvault.URL_API + route,
         headers: {
           'Content-Type': 'application/json',
           'X-Forwarded-Proto': 'https',
@@ -42,24 +42,25 @@ export const apiReq = (self: EduVault) =>
       return res;
     }
   };
+
 /** @param route should start with slash */
 export const get =
-  (self: EduVault) =>
+  (eduvault: EduVault) =>
   async <T>(route: string, withCredentials = false) => {
-    const req = apiReq(self);
+    const req = apiReq(eduvault);
     return await req<T>(route, 'GET', undefined, withCredentials);
   };
 
 /** @param route should start with slash */
 export const post =
-  (self: EduVault) =>
+  (eduvault: EduVault) =>
   async <T>(route: string, data: any, withCredentials = false) => {
-    const req = apiReq(self);
+    const req = apiReq(eduvault);
     return await req<T>(route, 'POST', data, withCredentials);
   };
 
-export const ping = (self: EduVault) => async () => {
-  const res = await self.api.get<'pong'>('/ping');
+export const ping = (eduvault: EduVault) => async () => {
+  const res = await eduvault.api.get<'pong'>('/ping');
   if (res instanceof Error) return false;
   if (res.code === 200 && res.content == 'pong') return true;
   return false;
