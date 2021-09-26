@@ -1,4 +1,4 @@
-import { EduVault } from '../';
+import { EduVault } from '..';
 import { formatPreLoginFromExternalUrl } from '../utils';
 export interface LoginButtonOptions {
   buttonID: string;

@@ -24,11 +24,14 @@ import {
   startRemoteWrapped,
   sync,
   syncChanges,
-} from './lib/db';
-import { init } from './lib/init';
-import { Credentials, loadCredentials as load } from './lib/loadCredentials';
-import { setupLoginButton } from './lib/loginButton';
-import { pwLogin } from './lib/pwLogin';
+} from './methods/db';
+import { init } from './methods/init';
+import {
+  Credentials,
+  loadCredentials as load,
+} from './methods/loadCredentials';
+import { setupLoginButton } from './methods/loginButton';
+import { pwLogin } from './methods/pwLogin';
 import { initOptions } from './types';
 
 export * from './types';
