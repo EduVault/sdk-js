@@ -1,4 +1,5 @@
 import { ThreadID } from '@textile/hub';
+
 import { ROUTES } from '../../../config';
 import { decrypt, encrypt, rehydratePrivateKey } from '../../../utils';
 import { password } from '../../../utils/testUtils';
@@ -9,14 +10,14 @@ import postHandler from './postHandler';
 const response = (req: { body: PasswordLoginReq }) => {
   let code = 200;
   // console.log(req.body);
-  const privateKeyStr = decrypt(req.body.pwEncryptedPrivateKey!, password);
+  const privateKeyStr = decrypt(req.body.pwEncryptedPrivateKey, password);
   // console.log({ privateKeyStr });
   const privateKey = rehydratePrivateKey(privateKeyStr);
 
   let content: PasswordLoginRes | string = {
     pwEncryptedPrivateKey: encrypt(privateKey!.toString(), password)!,
     jwt: 'jwt',
-    pubKey: req.body.pubKey!,
+    pubKey: req.body.pubKey,
     threadIDStr: ThreadID.fromRandom().toString(),
     appLoginToken: 'appLoginToken',
     decryptToken: 'decryptToken',

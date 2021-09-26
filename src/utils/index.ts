@@ -35,41 +35,42 @@ export function testPrivateKey(
 export const generatePrivateKey = async (): Promise<PrivateKey> => {
   return await PrivateKey.fromRandom();
 };
-
 /** formats a request for password authentication. Creates new keys for sign ups */
-export const formatPasswordSignIn = async (options: {
+export const formatPasswordSignIn = async ({
+  username,
+  password,
+  redirectURL,
+  appID,
+}: {
   username: string;
   password: string;
-  redirectURL?: string;
+  redirectURL: string;
   appID: string;
 }) => {
-  // New person info. Generate each time, even if they are a returning person. If they are a returning person the server will just ignore this info. This lets us have a single endpoint for login/signup
   const privateKey = await PrivateKey.fromRandom();
   const pubKey = await privateKey.public.toString();
   const newThreadID = await ThreadID.fromRandom();
   const threadIDStr = newThreadID.toString();
-  let error: string | null = '';
-  if (!options.password) error += 'No password provided. ';
-  if (!options.username) error += 'no username provided. ';
-  let pwEncryptedPrivateKey;
-  if (options.username && options.password)
-    pwEncryptedPrivateKey = encrypt(privateKey.toString(), options.password);
-  if (!pwEncryptedPrivateKey)
-    error += 'Could not encrypt private key with password. ';
 
-  if (error.length > 0) throw error;
+  const pwEncryptedPrivateKey = encrypt(privateKey.toString(), password);
+  if (!pwEncryptedPrivateKey)
+    return 'Could not encrypt private key with password';
+  const clientToken = (Math.random() * 20).toString();
   const personAuthReq: PasswordLoginReq = {
-    username: options.username,
-    password: hash(options.password),
-    pwEncryptedPrivateKey: pwEncryptedPrivateKey || undefined,
+    username,
+    password: hash(password),
+    pwEncryptedPrivateKey,
     threadIDStr,
     pubKey,
-    redirectURL: options.redirectURL,
-    appID: options.appID,
+    redirectURL: redirectURL ?? 'http//:localhost',
+    appID,
+    clientToken,
   };
 
   return personAuthReq;
 };
+
+
 
 export const storePersistentAuthData = ({
   jwtEncryptedPrivateKey,
