@@ -10,6 +10,7 @@ test('valid passwordLogin', async () => {
     redirectURL: 'http://localhost',
     appID: '1',
   });
+  if ('error' in validLogin) throw validLogin;
   const res = await eduvault.api.passwordLogin(validLogin);
   if ('error' in res) throw 'login error';
   expect(res.content.appLoginToken.length).toBeGreaterThanOrEqual(3);

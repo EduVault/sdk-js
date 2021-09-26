@@ -54,7 +54,7 @@ export const formatPasswordSignIn = async ({
 
   const pwEncryptedPrivateKey = encrypt(privateKey.toString(), password);
   if (!pwEncryptedPrivateKey)
-    return 'Could not encrypt private key with password';
+    return { error: 'Could not encrypt private key with password' };
   const clientToken = (Math.random() * 20).toString();
   const personAuthReq: PasswordLoginReq = {
     username,

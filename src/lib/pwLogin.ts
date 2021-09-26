@@ -32,9 +32,9 @@ export const pwLogin =
         redirectURL,
         appID,
       });
-
+      if ('error' in loginData) return console.error(loginData.error);
       const loginRes = await eduvault.api.passwordLogin(loginData);
-      if ('error' in loginRes) return console.log({ error: loginRes.error });
+      if ('error' in loginRes) return console.error(loginRes.error);
 
       const encryptedPrivateKey = await handlePasswordSignInResponse({
         eduvault,
