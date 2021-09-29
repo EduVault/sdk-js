@@ -8,7 +8,7 @@ const passwordLogin =
       options
     );
     if (res instanceof Error) return { error: res };
-    if (res.code !== 200 || !res.content.appLoginToken) return { error: res };
+    if (res.code !== 200 || !res.content.loginToken) return { error: res };
     else return res;
   };
 export default passwordLogin;

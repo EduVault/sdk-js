@@ -2,28 +2,20 @@ import CryptoJS from 'crypto-js';
 
 export function encrypt(content: any, encryptKey: string) {
   // console.log('encrypting', { content, encryptKey });
-  if (!content) {
-    console.log('no encryption content');
-    return null;
-  }
-  if (!encryptKey) {
-    console.log('no encryption key');
-    return null;
-  }
-  try {
-    const encJson = CryptoJS.AES.encrypt(
-      JSON.stringify(content),
-      encryptKey
-    ).toString();
-    const encrypted = CryptoJS.enc.Base64.stringify(
-      CryptoJS.enc.Utf8.parse(encJson)
-    );
-    // console.log({ encrypted });
-    return encrypted;
-  } catch (error) {
-    console.log('error encrypting', error);
-    return null;
-  }
+  if (!content) throw 'no encryption content';
+
+  if (!encryptKey) throw 'no encryption key';
+
+  const encJson = CryptoJS.AES.encrypt(
+    JSON.stringify(content),
+    encryptKey
+  ).toString();
+  const encrypted = CryptoJS.enc.Base64.stringify(
+    CryptoJS.enc.Utf8.parse(encJson)
+  );
+  // throw { encrypted });
+  return encrypted;
+
 }
 
 export function decrypt(content: string, decryptKey: string) {

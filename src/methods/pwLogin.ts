@@ -1,11 +1,16 @@
-import { PrivateKey, ThreadID } from '@textile/hub';
+import { ThreadID } from '@textile/hub';
 
-import { EduVault } from '..';
+import {
+  EduVault,
+  LoginButtonQueries,
+  LoginRedirectQueries,
+  PasswordLoginRes,
+} from '..';
+import { formatQueries, parseQueries } from '../api/helpers';
 import {
   decrypt,
   encrypt,
   formatPasswordSignIn,
-  formatPostLoginRedirectURL,
   rehydratePrivateKey,
   storeNonPersistentAuthData,
   storePersistentAuthData,
@@ -14,45 +19,47 @@ import {
 
 export const pwLogin =
   (eduvault: EduVault) =>
-  async ({
-    username,
-    password,
-    redirectURL,
-  }: {
-    password: string;
-    username: string;
-    redirectURL: string;
-  }) => {
+  async ({ username, password }: { password: string; username: string }) => {
     try {
-      const appID = eduvault.appID;
+      // collect queries from third party app. thats why we don't grab appID from eduvault.
+      const { appID, redirectURL, clientToken } = parseQueries(
+        window.location.href.split('?')[1]
+      ) as LoginButtonQueries;
+      if (!clientToken) throw 'login Client token not found';
+      if (!appID) throw 'login appID not found';
+      if (!clientToken) throw 'login clientToken';
 
+      // format login data
       const loginData = await formatPasswordSignIn({
         username,
         password,
         redirectURL,
         appID,
       });
-      if ('error' in loginData) return console.error(loginData.error);
+
+      if ('error' in loginData) throw loginData.error;
+
+      // send login
       const loginRes = await eduvault.api.passwordLogin(loginData);
-      if ('error' in loginRes) return console.error(loginRes.error);
+      if ('error' in loginRes) throw loginRes.error;
 
-      const encryptedPrivateKey = await handlePasswordSignInResponse({
-        eduvault,
-        ...loginRes.content,
-        password,
-      });
+      // handle login, generate outgoing redirect
+      const { redirectUrlWithQueries, error } =
+        await handlePasswordSignInResponse({
+          eduvault,
+          ...loginRes.content,
+          password,
+          clientToken,
+          redirectURL,
+        });
 
-      const redirectUrlWithQueries = formatPostLoginRedirectURL({
-        redirectURL,
-        encryptedPrivateKey,
-        ...loginRes.content,
-      });
+      if (error) throw error;
+      if (!redirectUrlWithQueries) throw 'error building redirect queries';
 
       window.location.assign(redirectUrlWithQueries);
 
       return {
         ...loginRes.content,
-        encryptedPrivateKey,
         redirectUrlWithQueries,
       };
     } catch (error) {
@@ -60,78 +67,77 @@ export const pwLogin =
     }
   };
 
+/**
+ * Decrypt and test private key
+ */
 const retrievePrivateKey = async (
-  pwEncryptedPrivateKey: string,
-  password: string,
+  encryptedPrivateKey: string,
+  encryptKey: string,
   pubKey: string
 ) => {
-  const keyStr = decrypt(pwEncryptedPrivateKey, password);
+  const keyStr = decrypt(encryptedPrivateKey, encryptKey);
   if (!keyStr) throw 'Could not decrypt PrivateKey';
   const retrievedKey = rehydratePrivateKey(keyStr);
   if (!retrievedKey || !testPrivateKey(retrievedKey, pubKey))
     throw 'Could not retrieve PrivateKey';
   return retrievedKey;
 };
-// const getJwts = async () => {
-//   const jwts = await eduvault.api.getJwt();
-//   if (!jwts || 'error' in jwts || !jwts.content.jwt)
-//     throw 'could not get jwt';
-//   return jwts.content;
-// };
-const encryptPrivKeyWithJwt = (privateKey: PrivateKey, jwt: string) => {
-  const jwtEncryptedPrivateKey = encrypt(privateKey.toString(), jwt);
-  if (!jwtEncryptedPrivateKey) throw 'error encrypting jwtEncryptedPrivateKey';
-  return jwtEncryptedPrivateKey;
-};
-const encryptPrivKeyWithDecryptToken = (
-  privateKey: PrivateKey,
-  decryptToken: string
-) => {
-  const encryptedPrivateKey = encrypt(privateKey.toString(), decryptToken);
-  if (!encryptedPrivateKey) throw 'error encrypting encryptedPrivateKey';
-  return encryptedPrivateKey;
-};
 
-const handlePasswordSignInResponse = async (loginRes: {
+interface HandlePasswordSignInResponse extends PasswordLoginRes {
   eduvault: EduVault;
-  pwEncryptedPrivateKey: string;
-  threadIDStr: string;
-  pubKey: string;
-  decryptToken: string;
   password: string;
-  jwt: string;
-}) => {
-  const {
-    eduvault,
-    password,
-    pwEncryptedPrivateKey,
-    threadIDStr,
-    pubKey,
-    decryptToken,
-    jwt,
-  } = loginRes;
+  clientToken: string;
+  redirectURL: string;
+}
 
-  const privateKey = await retrievePrivateKey(
-    pwEncryptedPrivateKey,
-    password,
-    pubKey
-  );
-  // const { jwt, oldJwt } = await getJwts();
-  const jwtEncryptedPrivateKey = encryptPrivKeyWithJwt(privateKey, jwt);
-  const encryptedPrivateKey = encryptPrivKeyWithDecryptToken(
-    privateKey,
-    decryptToken
-  );
-  const threadID = ThreadID.fromString(threadIDStr);
+/** store data and retrieve and encrypt keys */
+const handlePasswordSignInResponse = async ({
+  eduvault,
+  pwEncryptedPrivateKey,
+  threadIDStr,
+  pubKey,
+  password,
+  jwt,
+  clientToken,
+  redirectURL,
+  loginToken,
+}: HandlePasswordSignInResponse) => {
+  try {
+    const privateKey = await retrievePrivateKey(
+      pwEncryptedPrivateKey,
+      password,
+      pubKey
+    );
 
-  storePersistentAuthData({
-    jwtEncryptedPrivateKey,
-    pwEncryptedPrivateKey,
-    threadIDStr,
-    pubKey,
-    authType: 'password',
-  });
-  storeNonPersistentAuthData({ eduvault, privateKey, jwt, threadID });
+    const jwtEncryptedPrivateKey = encrypt(privateKey, jwt);
+    if (!jwtEncryptedPrivateKey) throw 'error encrypting key with jwt';
+    const clientTokenEncryptedKey = encrypt(privateKey.toString(), clientToken);
+    if (!clientTokenEncryptedKey) throw 'error encrypting key';
 
-  return encryptedPrivateKey;
+    const threadID = ThreadID.fromString(threadIDStr);
+
+    storePersistentAuthData({
+      jwtEncryptedPrivateKey,
+      pwEncryptedPrivateKey,
+      threadIDStr,
+      pubKey,
+      authType: 'password',
+    });
+    storeNonPersistentAuthData({ eduvault, privateKey, jwt, threadID });
+
+    const queryData: LoginRedirectQueries = {
+      pwEncryptedPrivateKey,
+      loginToken,
+      pubKey,
+      threadIDStr,
+      clientTokenEncryptedKey,
+    };
+
+    const queries = formatQueries(queryData);
+    const redirectUrlWithQueries = redirectURL + '?' + queries;
+
+    return { redirectUrlWithQueries };
+  } catch (error) {
+    return { error };
+  }
 };

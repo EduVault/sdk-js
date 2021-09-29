@@ -3,7 +3,7 @@ import { PrivateKey, ThreadID } from '@textile/hub';
 import EduVault from '../';
 import { AuthType, PasswordLoginReq } from '../types';
 
-import { encrypt, hash } from './encryption';
+import { encrypt, decrypt, hash } from './encryption';
 export * from './encryption';
 
 export function rehydratePrivateKey(keyStr: string) {
@@ -55,7 +55,6 @@ export const formatPasswordSignIn = async ({
   const pwEncryptedPrivateKey = encrypt(privateKey.toString(), password);
   if (!pwEncryptedPrivateKey)
     return { error: 'Could not encrypt private key with password' };
-  const clientToken = (Math.random() * 20).toString();
   const personAuthReq: PasswordLoginReq = {
     username,
     password: hash(password),
@@ -64,13 +63,10 @@ export const formatPasswordSignIn = async ({
     pubKey,
     redirectURL: redirectURL ?? 'http//:localhost',
     appID,
-    clientToken,
   };
 
   return personAuthReq;
 };
-
-
 
 export const storePersistentAuthData = ({
   jwtEncryptedPrivateKey,
@@ -123,30 +119,17 @@ export const storeNonPersistentAuthData = ({
   if (threadID) eduvault.threadID = threadID;
 };
 
-export const formatPreLoginFromExternalUrl = ({
-  URL_APP,
-  appID,
-  redirectURL,
-}: {
-  URL_APP: string;
-  appID: string;
-  redirectURL: string;
-}) => `${URL_APP}?app_id=${appID}&redirect_url=${redirectURL}`;
+export const decryptAndTestKey = async (
+  encryptedKey: string,
+  decryptToken: string,
+  pubKey: string
+) => {
+  const keyStr = decrypt(encryptedKey, decryptToken);
+  if (!keyStr) throw 'unable to decrypt';
+  const key = rehydratePrivateKey(keyStr);
+  if (!key) throw 'unable to rehydrate';
+  const keyValid = testPrivateKey(key, pubKey);
+  if (!keyValid) throw 'error validating key';
 
-export const formatPostLoginRedirectURL = ({
-  redirectURL,
-  threadIDStr,
-  pwEncryptedPrivateKey,
-  encryptedPrivateKey,
-  appLoginToken,
-  pubKey,
-}: {
-  redirectURL: string;
-  threadIDStr: string;
-  pwEncryptedPrivateKey: string;
-  encryptedPrivateKey: string;
-  appLoginToken: string;
-  pubKey: string;
-}): string =>
-  redirectURL +
-  `?thread_id=${threadIDStr}&pw_encrypted_private_key=${pwEncryptedPrivateKey}&encrypted_private_key=${encryptedPrivateKey}&app_login_token=${appLoginToken}&pub_key=${pubKey}`;
+  return key;
+};

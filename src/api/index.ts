@@ -4,11 +4,10 @@ import { EduVault } from '../index';
 
 import getJwt from './getJwt';
 import passwordLogin from './passwordLogin';
+import appLogin from './appLogin';
 import { ApiRes } from './types';
 
 type Methods = 'GET' | 'POST';
-
-
 
 export const apiReq = (eduvault: EduVault) =>
   async function <T>(
@@ -72,4 +71,5 @@ export const api = (self: EduVault) => ({
   ping: ping(self),
   passwordLogin: passwordLogin(self),
   getJwt: getJwt(self),
+  appLogin: appLogin(self),
 });

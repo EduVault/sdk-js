@@ -26,10 +26,7 @@ import {
   syncChanges,
 } from './methods/db';
 import { init } from './methods/init';
-import {
-  Credentials,
-  loadCredentials as load,
-} from './methods/loadCredentials';
+import { load } from './methods/loadCredentials';
 import { setupLoginButton } from './methods/loginButton';
 import { pwLogin } from './methods/pwLogin';
 import { initOptions } from './types';
@@ -37,6 +34,8 @@ import { initOptions } from './types';
 export * from './types';
 export { startWorker } from './api/mocks/browser';
 export { startServer as mockServer } from './api/mocks/server';
+
+type LoadingStatus = 'not started' | 'loading' | 'loaded' | 'error';
 class EduVault {
   // config variables
   URL_APP = URL_APP;
@@ -66,12 +65,9 @@ class EduVault {
   // getJWT = getJWT(this);
   // setupLoginButton = setupLoginButton(this);
   load = load(this);
-  onLoadStart?: () => any;
-  onLoadReady?: (credentials: Credentials) => any;
-  onLoadError?: (error: string) => any;
 
   // status
-  loadingStatus = 'not started';
+  loadingStatus: LoadingStatus = 'not started';
   isSyncing = false;
   isLocalReady = false;
   isRemoteReady = false;

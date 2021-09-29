@@ -19,8 +19,7 @@ const response = (req: { body: PasswordLoginReq }) => {
     jwt: 'jwt',
     pubKey: req.body.pubKey,
     threadIDStr: ThreadID.fromRandom().toString(),
-    appLoginToken: 'appLoginToken',
-    decryptToken: 'decryptToken',
+    loginToken: 'loginToken',
   };
   if (!req.body.appID) {
     content = 'no appID';

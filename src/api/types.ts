@@ -1,38 +1,24 @@
-// MAKE SURE THESE MATCH eduvault/core/api/src/types
-
-export interface IApp {
-  _id: string;
-  appID: string;
-  devID: string;
-  name: string;
-  description?: string;
-  authorizedDomains?: string[];
-  persons?: string[];
-}
-export interface AppAndTokenData extends IApp {
-  id: string;
-  decryptToken: string;
-}
-
-export interface AppTokenData {
-  data: { id: string; decryptToken: string };
-  iat: number;
-  exp: number;
-}
+// MAKE SURE THESE MATCH eduvault/core/api/src/routes/types
 
 export interface ApiRes<T> {
   content: T;
   code: number;
+}
+
+// LOGIN/SIGNUP FLOW
+export interface LoginButtonQueries {
+  appID: string; // to match redirectURL and verify request comes from registered app
+  redirectURL: string;
+  clientToken: string; // used to safely pass the private key back to the third party app. 3rd party decrypts with this later
 }
 export interface PasswordLoginReq {
   username: string;
   password: string;
   appID: string;
   threadIDStr: string;
-  pwEncryptedPrivateKey: string;
-  pubKey: string;
-  redirectURL: string;
-  clientToken: string;
+  pwEncryptedPrivateKey: string; // encrypted with unhashed password
+  pubKey: string; // to verify privKey
+  redirectURL: string; //
 }
 
 export interface PasswordLoginRes {
@@ -40,24 +26,34 @@ export interface PasswordLoginRes {
   jwt: string;
   pubKey: string;
   threadIDStr: string;
-  appLoginToken: string;
-  decryptToken: string;
+  loginToken: string;
 }
 
-export interface GetJWTRes {
-  jwt: string;
-  oldJwt: string;
+export interface LoginRedirectQueries {
+  pwEncryptedPrivateKey: string;
+  clientTokenEncryptedKey: string;
+  loginToken: string;
+  pubKey: string;
+  threadIDStr: string;
 }
 
 export interface AppAuthReq {
-  appLoginToken: string;
+  loginToken: string;
   appID: string;
 }
 export interface AppAuthRes {
   jwt: string;
   oldJwt: string;
-  decryptToken: string;
 }
+
+// RETURNING PERSON
+export interface GetJWTRes {
+  jwt: string;
+  oldJwt: string;
+}
+
+// TODO: app registration
+
 export interface AppRegisterReq {
   appID: string;
   username: string;
@@ -74,6 +70,8 @@ export interface AppUpdateReq {
   authorizedDomains?: string[];
   persons?: string[];
 }
+
+// TODO: Dev registration
 export interface DevVerifyReq {
   appSecret: string;
   devID: string;

@@ -1,13 +1,27 @@
-import EduVault from '..';
+import EduVault, { LoginButtonQueries } from '..';
+import { formatQueries, parseQueries } from '../api/helpers';
+import { window } from '../setupTests';
 import { password, username } from '../utils/testUtils';
 
-const eduvault = new EduVault({ appID: '1' });
+const pwRedirectQueries: LoginButtonQueries = {
+  redirectURL: 'http://localhost:3000/login',
+  appID: '1',
+  clientToken: 'asdfasdfasdf',
+};
 
-test('pwLogin', async () => {
+let eduvault: EduVault;
+beforeEach(() => {
+  window.location.href =
+    'http://localhost:3000/login/?' + formatQueries(pwRedirectQueries);
+
+  global.window = window as any;
+  eduvault = new EduVault({ appID: '1' });
+});
+
+test('pwLogin gets correct response', async () => {
   const res = await eduvault.pwLogin({
     username,
     password,
-    redirectURL: 'http://localhost:3000/login',
   });
   if (typeof res === 'undefined') throw 'failed';
   if ('error' in res) throw res;
@@ -15,4 +29,23 @@ test('pwLogin', async () => {
   expect(res.pwEncryptedPrivateKey.length).toBeGreaterThan(2);
   expect(res.pubKey.length).toBeGreaterThan(2);
   expect(res.threadIDStr.length).toBeGreaterThan(2);
+
+  // redirects user, builds correct queries
+  const redirectQueries = parseQueries(window.location.href.split('?')[1]);
+  expect(redirectQueries.clientTokenEncryptedKey.length).toBeGreaterThan(5);
+  expect(redirectQueries.loginToken.length).toBeGreaterThan(5);
+  expect(redirectQueries.pubKey.length).toBeGreaterThan(5);
+  expect(redirectQueries.pwEncryptedPrivateKey.length).toBeGreaterThan(5);
+  expect(redirectQueries.threadIDStr.length).toBeGreaterThan(5);
 });
+
+test('incomplete login', async () => {
+  const res = await eduvault.pwLogin({
+    username,
+    password: null as any,
+  });
+  expect(res.error).toBe('no encryption key');
+});
+
+test.todo('saves data to localStorage and app');
+// can directly test handlePasswordSignInResponse()

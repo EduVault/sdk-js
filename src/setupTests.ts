@@ -1,7 +1,7 @@
 import domino from 'domino';
 
-import { startServer } from './src/api/mocks/server';
-import LocalStorageMock from './src/api/mocks/localStorage';
+import { startServer } from './api/mocks/server';
+import LocalStorageMock from './api/mocks/localStorage';
 
 /** This is a hacky fix. We can't use jest-env jsdom because then msw won't work, so this helps get some dom features working */
 const window = domino.createWindow('<div></div>');
@@ -14,3 +14,5 @@ if (process.env.EV_SDK_TEST_ENV === 'unit') {
   afterEach(() => server.resetHandlers());
   afterAll(() => server.close());
 }
+
+export { window };
