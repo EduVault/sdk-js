@@ -1,5 +1,7 @@
 // MAKE SURE THESE MATCH eduvault/core/api/src/routes/types
 
+import { UserAuth } from '@textile/security';
+
 export interface ApiRes<T> {
   content: T;
   code: number;
@@ -50,6 +52,33 @@ export interface AppAuthRes {
 export interface GetJWTRes {
   jwt: string;
   oldJwt: string;
+}
+
+export interface LoginToken {
+  data: { appID: string; personID: string };
+  iat: number;
+  exp: number;
+}
+
+export interface JWTToken {
+  data: { appID: string; personID: string };
+  iat: number;
+  exp: number;
+}
+
+export interface WsMessageData {
+  jwt?: string;
+  type:
+    | 'token-request'
+    | 'token-response'
+    | 'challenge-request'
+    | 'challenge-response'
+    | 'error';
+  signature?: string | Uint8Array;
+  error?: string;
+  pubKey?: string;
+  challenge?: any;
+  personAuth?: UserAuth;
 }
 
 // TODO: app registration

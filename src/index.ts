@@ -6,7 +6,7 @@ import {
 } from '@textile/threaddb/dist/cjs/local/collection';
 
 import { api } from './api';
-import { URL_API, URL_APP } from './config';
+import { URL_API, URL_APP, URL_WS_API } from './config';
 // import {
 //   appLogin,
 //   appRegister,
@@ -19,9 +19,7 @@ import {
   // debouncedSync,
   loginWithChallenge,
   startLocalDB,
-  startLocalWrapped,
   startRemoteDB,
-  startRemoteWrapped,
   sync,
   syncChanges,
 } from './methods/db';
@@ -35,11 +33,11 @@ export * from './types';
 export { startWorker } from './api/mocks/browser';
 export { startServer as mockServer } from './api/mocks/server';
 
-type LoadingStatus = 'not started' | 'loading' | 'loaded' | 'error';
 class EduVault {
   // config variables
   URL_APP = URL_APP;
   URL_API = URL_API;
+  URL_WS_API = URL_WS_API;
 
   // init options
   appID = '1'; // 1 is the default home app
@@ -68,7 +66,6 @@ class EduVault {
   setupLoginButton = setupLoginButton(this);
 
   // status
-  loadingStatus: LoadingStatus = 'not started';
   isSyncing = false;
   isLocalReady = false;
   isRemoteReady = false;
@@ -83,11 +80,10 @@ class EduVault {
   // db and db auth
   db?: Database;
   loginWithChallenge = loginWithChallenge(this);
-  startLocalDB = startLocalWrapped(this);
+  startLocalDB = startLocalDB(this);
   onLocalStart?: () => any;
   onLocalReady?: (db: Database) => any;
-  startRemoteRaw = startRemoteDB(this);
-  startRemoteDB = startRemoteWrapped(this);
+  startRemoteDB = startRemoteDB(this);
   onRemoteStart?: () => any;
   onRemoteReady?: (db: Database) => any;
 

@@ -39,3 +39,4 @@ export const ROUTES = {
 
 export const URL_API = 'https://eduvault.org/api';
 export const URL_APP = 'https://eduvault.org/app/login';
+export const URL_WS_API = 'wss://eduvault.org/api/ws';

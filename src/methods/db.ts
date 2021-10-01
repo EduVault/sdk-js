@@ -6,37 +6,47 @@ import { CollectionConfig } from '@textile/threaddb/dist/cjs/local/collection';
 import { isEqual, difference } from 'lodash';
 
 import { EduVault } from '../index';
+import { WsMessageData } from '../types';
+import { collectionConfig } from '../collections';
 
 export interface StartLocalDBOptions {
-  collectionConfig: CollectionConfig;
   version?: number;
   onStart?: () => any;
   onReady?: (db: Database) => any;
 }
-
-export const startLocalDB = async ({
-  collectionConfig,
-  version = 1,
-  onStart,
-  onReady,
-}: StartLocalDBOptions) => {
-  try {
-    if (onStart) onStart();
-    const db = await new Database('eduvault', collectionConfig);
-    await db.open(version);
-    console.log('started local db', { db });
-    // const count = await db.collection('deck')?.count({});
-    // console.log('count', { count });
-
-    if (onReady) onReady(db);
-    return db;
-  } catch (error) {
-    return { error };
-  }
+/**
+ * "Registered" or "official" collections are to be submitted through github pull request and will be in the collections folder
+ * but these won't be the most current unles sdk version is up to date. later consider adding an api call to get the latest ones
+ // TODO: call the api to get the most recent unregistered 
+ */
+const getCollections = (): CollectionConfig[] => {
+  // const collectionsFromApi = [];
+  const officialCollections = collectionConfig;
+  return [
+    ...officialCollections,
+    // ...collectionsFromApi
+  ];
 };
 
+export const startLocalDB =
+  (eduvault: EduVault) =>
+  async ({ version = 1, onStart, onReady }: StartLocalDBOptions) => {
+    try {
+      if (onStart) onStart();
+      const db = await new Database('eduvault', ...getCollections());
+      await db.open(version);
+      console.log('started local db', { db });
+      // const count = await db.collection('deck')?.count({});
+      // console.log('count', { count });
+      eduvault.db = db;
+      if (onReady) onReady(db);
+      return { db };
+    } catch (error) {
+      return { error };
+    }
+  };
+
 export interface StartRemoteDBOptions {
-  db: Database;
   threadID: ThreadID;
   jwt: string;
   privateKey: PrivateKey;
@@ -47,7 +57,6 @@ export interface StartRemoteDBOptions {
 export const startRemoteDB =
   (eduvault: EduVault) =>
   async ({
-    db,
     threadID,
     jwt,
     privateKey,
@@ -56,13 +65,13 @@ export const startRemoteDB =
   }: StartRemoteDBOptions) => {
     try {
       if (onStart) onStart();
+      const db = eduvault.db;
+      if (!db) throw 'no db found';
       console.log({ db, threadID, privateKey });
       const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
       const userAuth = await getUserAuth();
-      // console.log({ userAuth });
+      console.log({ userAuth });
 
-      /** this is only getting a one-time auth.... */
-      // console.log({ getUserAuth });
       /** can test against client */
       // const client = await Client.withUserAuth(getUserAuth);
       // const threads = await client.listThreads();
@@ -179,6 +188,9 @@ export const syncChanges = (eduvault: EduVault) => {
   };
 };
 
+const makeSendMessage = (ws: WebSocket) => (message: WsMessageData) =>
+  ws.send(JSON.stringify(message));
+
 export const loginWithChallenge =
   (eduvault: EduVault) =>
   (jwt: string, privateKey: PrivateKey): (() => Promise<PersonAuth>) => {
@@ -186,83 +198,64 @@ export const loginWithChallenge =
     // available later in the callback
     return () => {
       return new Promise((resolve, reject) => {
-        /** Initialize our websocket connection */
+        /** Initialize our ws connection */
         // console.log('jwt', jwt);
-        console.log('socket starting');
+        console.log('ws starting');
 
-        const socket = new WebSocket(eduvault.URL_API);
-        /** Wait for our socket to open successfully */
-        socket.onopen = async () => {
-          console.log('socket open');
-          if (!jwt || jwt === '') throw { error: 'no jwt' };
-          if (!privateKey) throw { error: 'no privateKey' };
-          socket.send(
-            JSON.stringify({
+        const ws = new WebSocket(eduvault.URL_WS_API);
+        const sendMessage = makeSendMessage(ws);
+        /** Wait for our ws to open successfully */
+        ws.onopen = async () => {
+          try {
+            console.log('ws open');
+            if (!jwt || jwt === '') throw { error: 'no jwt' };
+            if (!privateKey) throw { error: 'no privateKey' };
+
+            sendMessage({
               type: 'token-request',
               jwt: jwt,
               pubKey: privateKey.public.toString(),
-            })
-          );
+            });
 
-          socket.onmessage = async (msg) => {
-            const data = JSON.parse(msg.data);
-            console.log(
-              '=================wss message===================',
-              data
-            );
+            ws.onmessage = async (msg) => {
+              const data = JSON.parse(msg.data) as WsMessageData;
+              console.log(
+                '=================wss message===================',
+                data
+              );
 
-            switch (data.type) {
-              case 'error': {
-                console.log('wss error', data);
-                reject(data.value);
-                break;
-              }
-              /** The server issued a new challenge */
-              case 'challenge-request': {
-                /** Convert the challenge json to a Buffer */
-                const buf = Buffer.from(data.value);
-                /** Person our identity to sign the challenge */
-                const signed = await privateKey.sign(buf);
-                /** Send the signed challenge back to the server */
-                socket.send(
-                  JSON.stringify({
+              switch (data.type) {
+                case 'error': {
+                  console.log('wss error', data);
+                  reject(data.error);
+                  break;
+                }
+                /** The server issued a new challenge */
+                case 'challenge-request': {
+                  /** Convert the challenge json to a Buffer */
+                  const buf = Buffer.from(data.challenge);
+                  /** Person our identity to sign the challenge */
+                  const signed = await privateKey.sign(buf);
+                  /** Send the signed challenge back to the server */
+                  sendMessage({
                     type: 'challenge-response',
                     jwt: jwt,
-                    signature: Buffer.from(signed).toJSON(),
-                  })
-                );
-                break;
+                    signature: Buffer.from(signed).toJSON() as any,
+                  });
+                  break;
+                }
+                /** New token generated */
+                case 'token-response': {
+                  if (data.personAuth) resolve(data.personAuth);
+                  break;
+                }
               }
-              /** New token generated */
-              case 'token-response': {
-                resolve(data.value);
-                break;
-              }
-            }
-          };
+            };
+          } catch (error) {
+            console.log('wss error');
+            reject(error);
+          }
         };
       });
     };
   };
-
-export const startRemoteWrapped = (eduvault: EduVault) => {
-  return async (options: StartRemoteDBOptions) => {
-    const remoteStart = await eduvault.startRemoteRaw(options);
-    if ('error' in remoteStart) return { error: remoteStart.error };
-    else {
-      eduvault.remoteToken = remoteStart.token;
-      eduvault.db = remoteStart.db;
-      return eduvault.db;
-    }
-  };
-};
-export const startLocalWrapped = (eduvault: EduVault) => {
-  return async (options: StartLocalDBOptions) => {
-    const db = await startLocalDB(options);
-    if ('error' in db) return { error: db.error };
-    else {
-      eduvault.db = db;
-      return db;
-    }
-  };
-};

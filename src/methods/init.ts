@@ -16,6 +16,7 @@ export const init = (eduvault: EduVault, options: initOptions) => {
 
   if (options.URL_API) eduvault.URL_API = options.URL_API;
   if (options.URL_APP) eduvault.URL_APP = options.URL_APP;
+  if (options.URL_WS_API) eduvault.URL_WS_API = options.URL_WS_API;
 
   // move load credentials to a method explicitly called
   // if (options.onLoadCredentialsStart)
@@ -110,4 +111,4 @@ export const init = (eduvault: EduVault, options: initOptions) => {
   //     }
   //   } else return { error: loadResult };
   // } else return { error: 'Init Suppressed' };
-};;;
+};

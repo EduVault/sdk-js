@@ -11,6 +11,7 @@ export interface initOptions {
   log?: boolean;
   URL_API?: string;
   URL_APP?: string;
+  URL_WS_API?: string;
   // buttonID?: string;
   // redirectURL?: string;
   // onLoadCredentialsStart?: () => any;
