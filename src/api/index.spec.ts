@@ -4,7 +4,7 @@ const eduvault = new EduVault({ appID: '1' });
 test('get', async () => {
   // can get data from a response
   const res = await eduvault.api.get<'pong'>('/ping');
-  if (res instanceof Error) throw 'ping error';
+  if ('error' in res) throw 'ping error';
   expect(res.content).toBe('pong');
 });
 

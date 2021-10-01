@@ -1,6 +1,6 @@
-import EduVault from '..';
-import { formatPasswordSignIn } from '../utils';
-import { password, username } from '../utils/testUtils';
+import EduVault from '../..';
+import { formatPasswordSignIn } from '../../utils';
+import { password, username } from '../../utils/testUtils';
 const eduvault = new EduVault({ appID: '1' });
 
 test('valid passwordLogin', async () => {

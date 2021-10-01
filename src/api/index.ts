@@ -2,9 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 import { EduVault } from '../index';
 
-import getJwt from './getJwt';
-import passwordLogin from './passwordLogin';
-import appLogin from './appLogin';
+import { appLogin, getJwt, passwordLogin } from './calls/';
 import { ApiRes } from './types';
 
 type Methods = 'GET' | 'POST';
@@ -13,7 +11,7 @@ export const apiReq = (eduvault: EduVault) =>
   async function <T>(
     route: string,
     method: Methods,
-    data?: any,
+    data?: unknown,
     withCredentials = false
   ) {
     try {
@@ -22,6 +20,7 @@ export const apiReq = (eduvault: EduVault) =>
         headers: {
           'Content-Type': 'application/json',
           'X-Forwarded-Proto': 'https',
+          // 'Access-Control-Allow-Headers': 'x-requested-with',
         },
         method: method,
         withCredentials,
@@ -37,8 +36,7 @@ export const apiReq = (eduvault: EduVault) =>
       return resData;
     } catch (error) {
       console.log({ apiReqError: error });
-      const res = new Error(String(error));
-      return res;
+      return { error };
     }
   };
 
@@ -47,20 +45,21 @@ export const get =
   (eduvault: EduVault) =>
   async <T>(route: string, withCredentials = false) => {
     const req = apiReq(eduvault);
-    return await req<T>(route, 'GET', undefined, withCredentials);
+    const res = await req<T>(route, 'GET', undefined, withCredentials);
+    return res;
   };
 
 /** @param route should start with slash */
 export const post =
   (eduvault: EduVault) =>
-  async <T>(route: string, data: any, withCredentials = false) => {
+  async <T>(route: string, data: unknown, withCredentials = false) => {
     const req = apiReq(eduvault);
     return await req<T>(route, 'POST', data, withCredentials);
   };
 
 export const ping = (eduvault: EduVault) => async () => {
   const res = await eduvault.api.get<'pong'>('/ping');
-  if (res instanceof Error) return false;
+  if ('error' in res) return false;
   if (res.code === 200 && res.content == 'pong') return true;
   return false;
 };

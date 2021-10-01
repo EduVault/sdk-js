@@ -8,13 +8,11 @@ import {
 } from '..';
 import { formatQueries, parseQueries } from '../api/helpers';
 import {
-  decrypt,
+  decryptAndTestKey,
   encrypt,
   formatPasswordSignIn,
-  rehydratePrivateKey,
   storeNonPersistentAuthData,
   storePersistentAuthData,
-  testPrivateKey,
 } from '../utils';
 
 export const pwLogin =
@@ -67,22 +65,6 @@ export const pwLogin =
     }
   };
 
-/**
- * Decrypt and test private key
- */
-const retrievePrivateKey = async (
-  encryptedPrivateKey: string,
-  encryptKey: string,
-  pubKey: string
-) => {
-  const keyStr = decrypt(encryptedPrivateKey, encryptKey);
-  if (!keyStr) throw 'Could not decrypt PrivateKey';
-  const retrievedKey = rehydratePrivateKey(keyStr);
-  if (!retrievedKey || !testPrivateKey(retrievedKey, pubKey))
-    throw 'Could not retrieve PrivateKey';
-  return retrievedKey;
-};
-
 interface HandlePasswordSignInResponse extends PasswordLoginRes {
   eduvault: EduVault;
   password: string;
@@ -103,7 +85,7 @@ const handlePasswordSignInResponse = async ({
   loginToken,
 }: HandlePasswordSignInResponse) => {
   try {
-    const privateKey = await retrievePrivateKey(
+    const privateKey = await decryptAndTestKey(
       pwEncryptedPrivateKey,
       password,
       pubKey

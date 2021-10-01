@@ -1,12 +1,8 @@
 import { PrivateKey, ThreadID } from '@textile/threaddb';
 
-import { EduVault, LoginRedirectQueries } from '..';
+import { EduVault, LoginRedirectQueries } from '../';
 import { parseQueries } from '../api/helpers';
-import {
-  decryptAndTestKey,
-  rehydratePrivateKey,
-  testPrivateKey,
-} from '../utils';
+import { decryptAndTestKey } from '../utils';
 import { decrypt, encrypt } from '../utils';
 // import { ulid } from 'ulid';
 export interface Credentials {
@@ -38,11 +34,14 @@ export const loadPasswordRedirect = async ({
   const clientToken = localStorage.getItem('clientToken');
   if (!clientToken) throw 'no client token in localStorage';
   // decrypt keys with clientToken
+  console.log({ clientTokenEncryptedKey, clientToken, pubKey });
+  const key = await decryptAndTestKey(
+    clientTokenEncryptedKey,
+    clientToken,
+    pubKey
+  );
   const keyStr = decrypt(clientTokenEncryptedKey, clientToken);
-  const key = rehydratePrivateKey(keyStr);
   if (!key) throw 'error rehydrating key';
-  const keyValid = testPrivateKey(key, pubKey);
-  if (!keyValid) throw 'error validating key';
 
   // get jwt and cookie using loginToken
   const appAuthData = {
@@ -57,7 +56,7 @@ export const loadPasswordRedirect = async ({
   console.log({ res });
   // TODO: load database
 
-  alert('key can sign ' + key.canSign());
+  alert('YAY! key can sign ' + key.canSign());
   if (onReady) onReady({ key });
 };
 
@@ -68,8 +67,13 @@ export const loadReturningPerson = async (
 ) => {
   const pubKey = localStorage.getItem('pubKey');
   if (!pubKey) throw 'error pubKey not in localStorage';
-
-  const jwts = await eduvault.api.getJwt();
+  let jwts;
+  try {
+    jwts = await eduvault.api.getJwt();
+  } catch (error) {
+    console.log(error);
+  }
+  if (!jwts) throw 'error getting jwts';
   if ('error' in jwts) throw jwts.error;
   if (!jwts.content.jwt) throw 'no jwt received';
   let key: PrivateKey;
@@ -113,9 +117,10 @@ export interface LoadOptions {
 export const load =
   (eduvault: EduVault) =>
   async ({ onStart, onReady, onError, log }: LoadOptions) => {
-    eduvault.loadingStatus = 'loading';
-    if (onStart) onStart();
     try {
+      eduvault.loadingStatus = 'loading';
+      if (onStart) onStart();
+
       /*
        * LOGIN REDIRECT
        */
@@ -144,6 +149,7 @@ export const load =
       if (jwtEncryptedPrivateKey && online)
         return loadReturningPerson(eduvault, jwtEncryptedPrivateKey, onReady);
     } catch (error) {
+      console.error(error);
       if (onError) onError(JSON.stringify(error));
     }
   };
