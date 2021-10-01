@@ -65,6 +65,7 @@ class EduVault {
   // getJWT = getJWT(this);
   // setupLoginButton = setupLoginButton(this);
   load = load(this);
+  setupLoginButton = setupLoginButton(this);
 
   // status
   loadingStatus: LoadingStatus = 'not started';

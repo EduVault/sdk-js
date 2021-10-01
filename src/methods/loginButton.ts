@@ -1,4 +1,6 @@
-import { EduVault, LoginButtonQueries } from '..';
+import { ulid } from 'ulid';
+
+import { EduVault, LoginButtonQueries } from '../';
 import { formatQueries } from '../api/helpers';
 export interface LoginButtonOptions {
   buttonID: string;
@@ -45,7 +47,7 @@ export const setupLoginButton =
         return { error: 'appID not found' };
       }
 
-      const clientToken = Math.round(Math.random() * 20).toString();
+      const clientToken = localStorage.getItem('clientToken') ?? ulid();
       localStorage.setItem('clientToken', clientToken);
 
       const loginButtonQueries: LoginButtonQueries = {
