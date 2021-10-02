@@ -54,6 +54,8 @@ export interface GetJWTRes {
   oldJwt: string;
 }
 
+export type AuthCheckRes = 'authenticated' | 'authentication failed';
+
 export interface LoginToken {
   data: { appID: string; personID: string };
   iat: number;

@@ -1,4 +1,5 @@
 import appLogin from './appLogin';
+import checkAuth from './checkAuth';
 import getHandler from './getHandler';
 import getJwt from './getJwt';
 import passwordLogin from './passwordLogin';
@@ -7,4 +8,4 @@ import passwordLogin from './passwordLogin';
 
 const ping = getHandler('/ping', 'pong');
 
-export const handlers = [ping, passwordLogin, appLogin, getJwt];
+export const handlers = [ping, passwordLogin, appLogin, getJwt, checkAuth];

@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 import { EduVault } from '../index';
 
-import { appLogin, getJwt, passwordLogin } from './calls/';
+import { appLogin, checkAuth, getJwt, passwordLogin } from './calls/';
 import { ApiRes } from './types';
 
 type Methods = 'GET' | 'POST';
@@ -71,4 +71,5 @@ export const api = (self: EduVault) => ({
   passwordLogin: passwordLogin(self),
   getJwt: getJwt(self),
   appLogin: appLogin(self),
+  checkAuth: checkAuth(self),
 });

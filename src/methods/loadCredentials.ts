@@ -23,130 +23,147 @@ export const loadPasswordRedirect = async ({
   loginToken,
   pubKey,
   threadIDStr,
-  onReady,
-  onLocalReady,
+  options: { onReady, onLogin, onLocalReady, onError },
 }: LoginRedirectQueries & {
   eduvault: EduVault;
-  onReady: (res: unknown) => unknown;
-  onLocalReady?: (res: unknown) => unknown;
+  options: LoadOptions;
 }) => {
-  if (
-    !pwEncryptedPrivateKey ||
-    !clientTokenEncryptedKey ||
-    !loginToken ||
-    !pubKey ||
-    !threadIDStr
-  )
-    throw 'login redirect query incomplete';
-  const clientToken = localStorage.getItem('clientToken');
-  if (!clientToken) throw 'no client token in localStorage';
-  // decrypt keys with clientToken
-  console.log({ clientTokenEncryptedKey, clientToken, pubKey });
-  const privateKey = await decryptAndTestKey(
-    clientTokenEncryptedKey,
-    clientToken,
-    pubKey
-  );
-  const keyStr = decrypt(clientTokenEncryptedKey, clientToken);
-  if (!privateKey) throw 'error rehydrating key';
+  try {
+    if (
+      !pwEncryptedPrivateKey ||
+      !clientTokenEncryptedKey ||
+      !loginToken ||
+      !pubKey ||
+      !threadIDStr
+    )
+      throw 'login redirect query incomplete';
+    const clientToken = localStorage.getItem('clientToken');
+    if (!clientToken) throw 'no client token in localStorage';
+    // decrypt keys with clientToken
+    // console.log({ clientTokenEncryptedKey, clientToken, pubKey });
+    const privateKey = await decryptAndTestKey(
+      clientTokenEncryptedKey,
+      clientToken,
+      pubKey
+    );
+    const keyStr = decrypt(clientTokenEncryptedKey, clientToken);
+    if (!privateKey) throw 'error rehydrating key';
 
-  // get jwt and cookie using loginToken
-  const appAuthData = {
-    loginToken: loginToken,
-    appID: '1',
-  };
-  const res = await eduvault.api.appLogin(appAuthData);
-  if ('error' in res) throw res.error;
+    // get jwt and cookie using loginToken
+    const appAuthData = {
+      loginToken: loginToken,
+      appID: '1',
+    };
+    const res = await eduvault.api.appLogin(appAuthData);
+    if ('error' in res) throw res.error;
+    const { jwt } = res.content;
+    if (!jwt) throw 'no jwt received';
 
-  const { jwt } = res.content;
-  if (!jwt) throw 'no jwt received';
+    // this call is extra, but it checks to make sure the cookie works
+    const loggedIn = await eduvault.api.checkAuth();
+    if (!loggedIn) throw 'cookie authentication failed';
+    if (onLogin) onLogin();
 
-  const jwtEncryptedPrivateKey = encrypt(keyStr, res.content.jwt);
-  localStorage.setItem('jwtEncryptedPrivateKey', jwtEncryptedPrivateKey);
-  console.log({ res });
+    const jwtEncryptedPrivateKey = encrypt(keyStr, res.content.jwt);
+    localStorage.setItem('jwtEncryptedPrivateKey', jwtEncryptedPrivateKey);
+    // console.log({ res });
 
-  const threadID = ThreadID.fromString(threadIDStr);
-  if (!threadID) throw 'error restoring threadID';
+    const threadID = ThreadID.fromString(threadIDStr);
+    if (!threadID) throw 'error restoring threadID';
 
-  const { db, error } = await eduvault.startLocalDB({ onReady: onLocalReady });
-  if (error || !db) throw error;
+    const { db, error } = await eduvault.startLocalDB({
+      onReady: onLocalReady,
+    });
+    if (error || !db) throw error;
 
-  const remote = await eduvault.startRemoteDB({
-    threadID,
-    jwt,
-    privateKey,
-    onReady,
-  });
-  if (remote.error) throw remote.error;
-  else onReady(eduvault);
+    const remote = await eduvault.startRemoteDB({
+      threadID,
+      jwt,
+      privateKey,
+    });
+    if (remote.error) throw remote.error;
+    else if (onReady) onReady();
+  } catch (error) {
+    if (onError) onError(JSON.stringify(error));
+  }
 };
 
 export const loadReturningPerson = async ({
   eduvault,
   jwtEncryptedPrivateKey,
-  onLocalReady,
-  onReady,
+  options: { onReady, onLogin, onLocalReady, onError },
 }: {
   eduvault: EduVault;
   jwtEncryptedPrivateKey: string;
-  onLocalReady?: (result: any) => unknown;
-  onReady: (result: any) => unknown;
+  options: LoadOptions;
 }) => {
-  const pubKey = localStorage.getItem('pubKey');
-  const threadIDstr = localStorage.getItem('threadID');
+  try {
+    const pubKey = localStorage.getItem('pubKey');
+    const threadIDstr = localStorage.getItem('threadIDStr');
 
-  if (!pubKey) throw 'error pubKey not in localStorage';
-  if (!threadIDstr) throw 'error threadID not in localStorage';
-  const threadID = ThreadID.fromString(threadIDstr);
-  if (!threadID) throw 'error restoring threadID';
-  const jwts = await eduvault.api.getJwt();
+    if (!pubKey) throw 'error pubKey not in localStorage';
+    if (!threadIDstr) throw 'error threadID not in localStorage';
+    const threadID = ThreadID.fromString(threadIDstr);
+    if (!threadID) throw 'error restoring threadID';
+    const jwts = await eduvault.api.getJwt();
 
-  if (!jwts) throw 'error getting jwts';
-  if ('error' in jwts) throw jwts.error;
-  const { jwt, oldJwt } = jwts.content;
-  if (!jwt) throw 'no jwt received';
-  const getKeyFromJwts = async ({
-    jwt,
-    oldJwt,
-  }: {
-    jwt: string;
-    oldJwt: string;
-  }) => {
-    let privateKey: PrivateKey | null = null;
-    try {
-      privateKey = await decryptAndTestKey(jwtEncryptedPrivateKey, jwt, pubKey);
-      if (!privateKey) throw 'first pass unable to rehydrate';
-    } catch (error) {
-      if (oldJwt) {
+    if (!jwts) throw 'error getting jwts';
+    if ('error' in jwts) throw jwts.error;
+    const { jwt, oldJwt } = jwts.content;
+    if (!jwt) throw 'no jwt received';
+
+    if (onLogin) onLogin();
+
+    const getKeyFromJwts = async ({
+      jwt,
+      oldJwt,
+    }: {
+      jwt: string;
+      oldJwt: string;
+    }) => {
+      let privateKey: PrivateKey | null = null;
+      try {
         privateKey = await decryptAndTestKey(
           jwtEncryptedPrivateKey,
-          oldJwt,
+          jwt,
           pubKey
         );
-        if (!privateKey) {
-          console.warn(error);
-          privateKey = null;
-          throw 'second pass unable to rehydrate';
+        if (!privateKey) throw 'first pass unable to rehydrate';
+      } catch (error) {
+        if (oldJwt) {
+          privateKey = await decryptAndTestKey(
+            jwtEncryptedPrivateKey,
+            oldJwt,
+            pubKey
+          );
+          if (!privateKey) {
+            console.warn(error);
+            privateKey = null;
+            throw 'second pass unable to rehydrate';
+          }
         }
       }
-    }
-    return privateKey;
-  };
-  const privateKey = await getKeyFromJwts({ jwt, oldJwt });
+      return privateKey;
+    };
+    const privateKey = await getKeyFromJwts({ jwt, oldJwt });
 
-  if (!privateKey) throw 'failed getting private key';
+    if (!privateKey) throw 'failed getting private key';
 
-  const { db, error } = await eduvault.startLocalDB({ onReady: onLocalReady });
-  if (error || !db) throw error;
+    const { db, error } = await eduvault.startLocalDB({
+      onReady: onLocalReady,
+    });
+    if (error || !db) throw error;
 
-  const remote = await eduvault.startRemoteDB({
-    threadID,
-    jwt,
-    privateKey,
-    onReady,
-  });
-  if (remote.error) throw remote.error;
-  else onReady(eduvault);
+    const remote = await eduvault.startRemoteDB({
+      threadID,
+      jwt,
+      privateKey,
+    });
+    if (remote.error) throw remote.error;
+    else if (onReady) onReady();
+  } catch (error) {
+    if (onError) onError(JSON.stringify(error));
+  }
 };
 
 // if not returning and not login redirect. load failed. return 'unable to login/recover session';
@@ -160,56 +177,53 @@ export const loadOffline = (pwEncryptedPrivateKey: string) => {
 
 export interface LoadOptions {
   onStart?: () => unknown;
-  onReady: (result: any) => unknown;
-  onLocalReady?: (result: any) => unknown;
+  onReady?: () => unknown;
+  onLocalReady?: () => unknown;
   onError?: (error: string) => unknown;
+  onLogin?: () => unknown;
   log?: boolean;
 }
-export const load =
-  (eduvault: EduVault) =>
-  async ({ onStart, onReady, onError, onLocalReady, log }: LoadOptions) => {
+export const load = (eduvault: EduVault) => async (options: LoadOptions) => {
+  try {
+    if (options.onStart) options.onStart();
+
+    /*
+     * LOGIN REDIRECT
+     */
+    let queries;
     try {
-      if (onStart) onStart();
-
-      /*
-       * LOGIN REDIRECT
-       */
-      let queries;
-      try {
-        queries = parseQueries(
-          window.location.href.split('?')[1]
-        ) as LoginRedirectQueries;
-      } catch (error) {
-        console.log('error loading queries', error);
-      }
-      if (log) console.log({ queries });
-      // call loading callbacks
-      if (queries?.loginToken)
-        return loadPasswordRedirect({
-          eduvault,
-          onReady,
-          ...queries,
-          onLocalReady,
-        });
-
-      /*
-       * RETURNING PERSON
-       */
-      const jwtEncryptedPrivateKey = localStorage.getItem(
-        'jwtEncryptedPrivateKey'
-      );
-      const online = await eduvault.api.ping();
-
-      if (log) console.log({ jwtEncryptedPrivateKey, online });
-      if (jwtEncryptedPrivateKey && online)
-        return loadReturningPerson({
-          eduvault,
-          jwtEncryptedPrivateKey,
-          onLocalReady,
-          onReady,
-        });
+      queries = parseQueries(
+        window.location.href.split('?')[1]
+      ) as LoginRedirectQueries;
     } catch (error) {
-      console.error(error);
-      if (onError) onError(JSON.stringify(error));
+      console.log('error loading queries', error);
     }
-  };
+    if (options.log) console.log({ queries });
+    // call loading callbacks
+    if (queries?.loginToken)
+      return loadPasswordRedirect({
+        eduvault,
+        ...queries,
+        options,
+      });
+
+    /*
+     * RETURNING PERSON
+     */
+    const jwtEncryptedPrivateKey = localStorage.getItem(
+      'jwtEncryptedPrivateKey'
+    );
+    const online = await eduvault.api.ping();
+
+    if (options.log) console.log({ jwtEncryptedPrivateKey, online });
+    if (jwtEncryptedPrivateKey && online)
+      return loadReturningPerson({
+        eduvault,
+        jwtEncryptedPrivateKey,
+        options,
+      });
+  } catch (error) {
+    console.error(error);
+    if (options.onError) options.onError(JSON.stringify(error));
+  }
+};

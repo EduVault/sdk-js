@@ -40,6 +40,6 @@
     "lib": ["esnext", "dom"],
     "types": ["node", "jest"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/api/calls/checkAuth.spects"],
   "compileOnSave": false
 }

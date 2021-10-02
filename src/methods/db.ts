@@ -67,10 +67,10 @@ export const startRemoteDB =
       if (onStart) onStart();
       const db = eduvault.db;
       if (!db) throw 'no db found';
-      console.log({ db, threadID, privateKey });
+      // console.log({ db, threadID, privateKey });
       const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
       const userAuth = await getUserAuth();
-      console.log({ userAuth });
+      // console.log({ userAuth });
 
       /** can test against client */
       // const client = await Client.withUserAuth(getUserAuth);
@@ -79,19 +79,17 @@ export const startRemoteDB =
       // const dbs = await client.listDBs();
       // console.log({ dbs });
       const remote = await db.remote.setUserAuth(userAuth);
-      console.log({ remote });
       // Grab the token, save it, or just use it
       const token = await remote.authorize(privateKey);
-      console.log({ token });
       // save the token encrypted with jwt locally. on refresh, get token with cookie.
 
       try {
         remote.id = threadID.toString();
-        const DBInfo = await remote.info();
-        console.log({ DBInfo });
+        // const DBInfo = await remote.info();
+        // console.log({ DBInfo });
       } catch (error) {
         try {
-          console.log({ DBInfoError: error });
+          // console.log({ DBInfoError: error });
 
           await remote.initialize(threadID);
         } catch (error) {
@@ -99,14 +97,14 @@ export const startRemoteDB =
           console.log({ initializeError: error });
         }
       }
-      try {
-        const DBInfo = await remote.info();
-        console.log({ DBInfo });
-      } catch (error) {
-        console.log({ DBInfoError: error });
-      }
+      // try {
+      //   const DBInfo = await remote.info();
+      //   console.log({ DBInfo });
+      // } catch (error) {
+      //   console.log({ DBInfoError: error });
+      // }
 
-      console.log({ remote, token });
+      // console.log({ remote, token });
       remote.config.metadata?.set('x-textile-thread-name', db.dexie.name);
       remote.config.metadata?.set('x-textile-thread', db.id || '');
       if (onReady) onReady(db);
@@ -200,14 +198,14 @@ export const loginWithChallenge =
       return new Promise((resolve, reject) => {
         /** Initialize our ws connection */
         // console.log('jwt', jwt);
-        console.log('ws starting');
+        // console.log('ws starting');
 
         const ws = new WebSocket(eduvault.URL_WS_API);
         const sendMessage = makeSendMessage(ws);
         /** Wait for our ws to open successfully */
         ws.onopen = async () => {
           try {
-            console.log('ws open');
+            // console.log('ws open');
             if (!jwt || jwt === '') throw { error: 'no jwt' };
             if (!privateKey) throw { error: 'no privateKey' };
 
@@ -219,10 +217,10 @@ export const loginWithChallenge =
 
             ws.onmessage = async (msg) => {
               const data = JSON.parse(msg.data) as WsMessageData;
-              console.log(
-                '=================wss message===================',
-                data
-              );
+              // console.log(
+              // '=================wss message===================',
+              // data
+              // );
 
               switch (data.type) {
                 case 'error': {
