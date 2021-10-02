@@ -35,7 +35,7 @@ export const startLocalDB =
       if (onStart) onStart();
       const db = await new Database('eduvault', ...getCollections());
       await db.open(version);
-      console.log('started local db', { db });
+      // console.log('started local db', { db });
       // const count = await db.collection('deck')?.count({});
       // console.log('count', { count });
       eduvault.db = db;
