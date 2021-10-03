@@ -1,6 +1,15 @@
 import { JSONSchema } from '@textile/threaddb';
 import { CollectionConfig } from '@textile/threaddb/dist/cjs/local/collection';
 
+/*
+ *  This should contain all of the person's home page and cross-app preferences
+ */
+export interface IPerson {
+  _id: string;
+  username: string;
+  birthDay: number;
+}
+
 export const personSchema: JSONSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
@@ -16,12 +25,12 @@ export const personSchema: JSONSchema = {
       type: 'number',
     },
   },
-  required: ['_id', 'username', 'birthDay'],
+  required: ['_id', 'username'],
 };
 
 const collections: CollectionConfig[] = [
   {
-    name: 'Person',
+    name: 'person',
     schema: personSchema,
   },
 ];

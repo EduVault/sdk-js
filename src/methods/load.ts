@@ -1,6 +1,6 @@
 import { PrivateKey, ThreadID } from '@textile/threaddb';
 
-import { EduVault, LoginRedirectQueries } from '../';
+import { EduVault, LoginRedirectQueries } from '..';
 import { parseQueries } from '../api/helpers';
 import { decryptAndTestKey } from '../utils';
 import { decrypt, encrypt } from '../utils';
@@ -62,6 +62,11 @@ export const loadPasswordRedirect = async ({
     // this call is extra, but it checks to make sure the cookie works
     const loggedIn = await eduvault.api.checkAuth();
     if (!loggedIn) throw 'cookie authentication failed';
+
+    // wipe url search queries from the bar
+    const newURL = location.href.split('?')[0];
+    window.history.pushState('object', document.title, newURL);
+
     if (onLogin) onLogin();
 
     const jwtEncryptedPrivateKey = encrypt(keyStr, res.content.jwt);
@@ -70,7 +75,6 @@ export const loadPasswordRedirect = async ({
 
     const threadID = ThreadID.fromString(threadIDStr);
     if (!threadID) throw 'error restoring threadID';
-
     const { db, error } = await eduvault.startLocalDB({
       onReady: onLocalReady,
     });
@@ -198,7 +202,7 @@ export const load = (eduvault: EduVault) => async (options: LoadOptions) => {
     } catch (error) {
       console.log('error loading queries', error);
     }
-    if (options.log) console.log({ queries });
+    // if (options.log) console.log({ queries });
     // call loading callbacks
     if (queries?.loginToken)
       return loadPasswordRedirect({
@@ -215,7 +219,7 @@ export const load = (eduvault: EduVault) => async (options: LoadOptions) => {
     );
     const online = await eduvault.api.ping();
 
-    if (options.log) console.log({ jwtEncryptedPrivateKey, online });
+    // if (options.log) console.log({ jwtEncryptedPrivateKey, online });
     if (jwtEncryptedPrivateKey && online)
       return loadReturningPerson({
         eduvault,

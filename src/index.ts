@@ -1,37 +1,32 @@
 import { Buckets, PrivateKey } from '@textile/hub';
-import { Database, JSONSchema, ThreadID } from '@textile/threaddb';
+import { JSONSchema, ThreadID } from '@textile/threaddb';
 import {
   Collection,
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
 
 import { api } from './api';
+import { INote } from './collections';
 import { URL_API, URL_APP, URL_WS_API } from './config';
-// import {
-//   appLogin,
-//   appRegister,
-//   clearCollections,
-//   devVerify,
-//   getJWT,
-//   personRegister,
-// } from './lib/APICalls';
 import {
-  // debouncedSync,
+  EduvaultDB,
+  init,
+  load,
   loginWithChallenge,
+  pwLogin,
+  setupLoginButton,
   startLocalDB,
   startRemoteDB,
-  sync,
-  syncChanges,
-} from './methods/db';
-import { init } from './methods/init';
-import { load } from './methods/loadCredentials';
-import { setupLoginButton } from './methods/loginButton';
-import { pwLogin } from './methods/pwLogin';
+} from './methods';
 import { initOptions } from './types';
 
 export * from './types';
 export { startWorker } from './api/mocks/browser';
 export { startServer as mockServer } from './api/mocks/server';
+
+export interface CoreCollections {
+  note?: Collection<INote>;
+}
 
 class EduVault {
   // config variables
@@ -55,41 +50,24 @@ class EduVault {
 
   // methods
   pwLogin = pwLogin(this);
-  // personRegister = personRegister(this);
-  // devVerify = devVerify(this);
-  // clearCollections = clearCollections(this);
-  // appRegister = appRegister(this);
-  // appLogin = appLogin(this);
-  // getJWT = getJWT(this);
-  // setupLoginButton = setupLoginButton(this);
   load = load(this);
   setupLoginButton = setupLoginButton(this);
 
   // status
   isSyncing = false;
-  isLocalReady = false;
-  isRemoteReady = false;
 
   // credentials
   privateKey?: PrivateKey;
   threadID?: ThreadID | null;
   jwt?: string;
   oldJwt?: string;
-  remoteToken?: string;
 
   // db and db auth
-  db?: Database;
+  db?: EduvaultDB;
+  setDb = (db: EduvaultDB) => (this.db = db);
   loginWithChallenge = loginWithChallenge(this);
   startLocalDB = startLocalDB(this);
-  onLocalStart?: () => any;
-  onLocalReady?: (db: Database) => any;
   startRemoteDB = startRemoteDB(this);
-  onRemoteStart?: () => any;
-  onRemoteReady?: (db: Database) => any;
-
-  syncChanges = syncChanges(this);
-  // checkConnectivityClearBacklog = checkConnectivityClearBacklog(this);
-  sync = sync(this);
 
   constructor(options: initOptions) {
     init(this, options);
@@ -98,7 +76,7 @@ class EduVault {
 export default EduVault;
 export {
   EduVault,
-  Database,
+  EduvaultDB,
   Buckets,
   JSONSchema,
   CollectionConfig,
@@ -106,5 +84,4 @@ export {
   setupLoginButton,
   startLocalDB,
   startRemoteDB,
-  syncChanges,
 };

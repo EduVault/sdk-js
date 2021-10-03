@@ -3,7 +3,7 @@
 // import { Credentials } from '../lib/loadCredentials';
 
 export * from '../api/types';
-export * from './model';
+export * from '../collections';
 
 /** suppressInit will only load the URL_API into the API calls, toggle log (if provided) */
 export interface initOptions {
