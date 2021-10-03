@@ -1,5 +1,8 @@
 import { JSONSchema } from '@textile/threaddb';
-import { CollectionConfig } from '@textile/threaddb/dist/cjs/local/collection';
+import {
+  Collection,
+  CollectionConfig,
+} from '@textile/threaddb/dist/cjs/local/collection';
 
 export const noteKey = 'note';
 
@@ -12,7 +15,7 @@ export interface INote {
   createdDate: number;
   editedDate: number;
 }
-
+export type NoteCollection = Collection<INote>;
 export const noteSchema: JSONSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
