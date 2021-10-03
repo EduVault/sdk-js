@@ -10,6 +10,7 @@ export interface IPerson {
   birthDay: number;
 }
 
+export const personKey = 'person';
 export const personSchema: JSONSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
@@ -30,7 +31,7 @@ export const personSchema: JSONSchema = {
 
 const collections: CollectionConfig[] = [
   {
-    name: 'person',
+    name: personKey,
     schema: personSchema,
   },
 ];

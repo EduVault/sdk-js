@@ -6,7 +6,6 @@ import {
 } from '@textile/threaddb/dist/cjs/local/collection';
 
 import { api } from './api';
-import { INote } from './collections';
 import { URL_API, URL_APP, URL_WS_API } from './config';
 import {
   EduvaultDB,
@@ -23,10 +22,6 @@ import { initOptions } from './types';
 export * from './types';
 export { startWorker } from './api/mocks/browser';
 export { startServer as mockServer } from './api/mocks/server';
-
-export interface CoreCollections {
-  note?: Collection<INote>;
-}
 
 class EduVault {
   // config variables

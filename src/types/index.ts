@@ -1,10 +1,16 @@
 // import { Database } from '@textile/threaddb';
 
+import { Collection } from '@textile/threaddb';
+import { INote, IPerson } from '../collections';
+
 // import { Credentials } from '../lib/loadCredentials';
 
 export * from '../api/types';
 export * from '../collections';
-
+export interface CoreCollections {
+  Note?: Collection<INote>;
+  Person?: Collection<IPerson>;
+}
 /** suppressInit will only load the URL_API into the API calls, toggle log (if provided) */
 export interface initOptions {
   appID: string;
@@ -30,14 +36,3 @@ export type AuthType =
   | 'password'
   | 'metamask'
   | 'default';
-
-export interface AuthState {
-  loggedIn: boolean;
-  authType: AuthType;
-  jwt?: string;
-  pubKey?: string;
-  privateKey?: string;
-  jwtEncryptedPrivateKey?: string;
-  threadID?: string;
-  threadIDStr?: string;
-}

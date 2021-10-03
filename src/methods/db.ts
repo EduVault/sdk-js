@@ -6,7 +6,7 @@ import { CollectionConfig } from '@textile/threaddb/dist/cjs/local/collection';
 import { Instance } from '@textile/threaddb/dist/cjs/local/document';
 import { difference, isEqual } from 'lodash';
 
-import { collectionConfig, INote, noteKey } from '../collections';
+import { collectionConfig, INote, noteKey, personKey } from '../collections';
 import { CoreCollections, EduVault } from '../index';
 import { WsMessageData } from '../types';
 
@@ -60,7 +60,7 @@ export class EduvaultDB extends Database {
   setCoreCollections = (payload: typeof this.coreCollections) =>
     (this.coreCollections = payload);
   coreCollections: CoreCollections = {
-    note: undefined,
+    Note: undefined,
   };
 }
 
@@ -75,7 +75,10 @@ export const startLocalDB =
         eduvault,
       });
       await db.open(version);
-      await db.setCoreCollections({ note: db.collection<INote>(noteKey) });
+      await db.setCoreCollections({
+        Note: db.collection<INote>(noteKey),
+        Person: db.collection(personKey),
+      });
 
       // console.log('started local db', { db });
       // const count = await db.collection('deck')?.count({});

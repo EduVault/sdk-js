@@ -16,7 +16,7 @@ export interface INote {
 export const noteSchema: JSONSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
-  title: 'note',
+  title: 'Note',
   properties: {
     _id: { type: 'string' },
     text: { type: 'string' },
@@ -28,7 +28,7 @@ export const noteSchema: JSONSchema = {
 
 const collections: CollectionConfig[] = [
   {
-    name: 'note',
+    name: noteKey,
     schema: noteSchema,
   },
 ];
