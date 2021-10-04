@@ -17,7 +17,7 @@ import {
   startLocalDB,
   startRemoteDB,
 } from './methods';
-import { initOptions } from './types';
+import { initOptions, Instances } from './types';
 
 export * from './types';
 export { startWorker } from './api/mocks/browser';
@@ -63,7 +63,6 @@ class EduVault {
   loginWithChallenge = loginWithChallenge(this);
   startLocalDB = startLocalDB(this);
   startRemoteDB = startRemoteDB(this);
-
   constructor(options: initOptions) {
     init(this, options);
   }
@@ -73,6 +72,7 @@ export {
   EduVault,
   EduvaultDB,
   Buckets,
+  Instances,
   JSONSchema,
   CollectionConfig,
   Collection,

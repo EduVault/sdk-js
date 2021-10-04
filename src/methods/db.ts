@@ -3,12 +3,11 @@ import { Buffer } from 'buffer';
 import { UserAuth as PersonAuth, PrivateKey } from '@textile/hub';
 import { Database, JSONSchema, ThreadID } from '@textile/threaddb';
 import { CollectionConfig } from '@textile/threaddb/dist/cjs/local/collection';
-import { Instance } from '@textile/threaddb/dist/cjs/local/document';
 import { difference, isEqual } from 'lodash';
 
 import { collectionConfig, INote, noteKey, personKey } from '../collections';
 import { CoreCollections, EduVault } from '../index';
-import { WsMessageData } from '../types';
+import { Instances, WsMessageData } from '../types';
 
 export interface StartLocalDBOptions {
   version?: number;
@@ -47,6 +46,9 @@ export class EduvaultDB extends Database {
       }
     | undefined
   >;
+  /**
+   * Pulls a collection from the remote and applies local changes on top of it. Also creates a snapshot of each the local and remote state before sync stored in localStorage in case the user wants to roll back changes after the sync
+   */
   sync: (collectionNames: string[]) => Promise<
     | {
         result: Instances<any>;
@@ -160,10 +162,6 @@ export const startRemoteDB =
     }
   };
 
-type Instances<T> = (T & {
-  _id: string;
-} & Instance)[];
-
 const setSnapshot = <T>(
   collectionName: string,
   instances: Instances<T>,
@@ -254,12 +252,8 @@ export const push =
     }
   };
 
-export const sync =
-  (eduvault: EduVault) =>
-  /**
-   * Pulls a collection from the remote and applies local changes on top of it. Also creates a snapshot of each the local and remote state before sync stored in localStorage in case the user wants to roll back changes after the sync
-   */
-  async (collectionNames: string[]) => {
+export const sync = (eduvault: EduVault) => {
+  const sync = async (collectionNames: string[]) => {
     console.log('starting debounced sync');
     try {
       const remote = eduvault.db?.remote;
@@ -317,6 +311,8 @@ export const sync =
       return { error };
     }
   };
+  return sync;
+};
 
 export const loginWithChallenge =
   (eduvault: EduVault) =>

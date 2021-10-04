@@ -1,6 +1,7 @@
 // import { Database } from '@textile/threaddb';
 
 import { Collection } from '@textile/threaddb';
+import { Instance } from '@textile/threaddb/dist/cjs/local/document';
 import { INote, IPerson } from '../collections';
 
 // import { Credentials } from '../lib/loadCredentials';
@@ -36,3 +37,7 @@ export type AuthType =
   | 'password'
   | 'metamask'
   | 'default';
+
+export type Instances<T> = (T & {
+  _id: string;
+} & Instance)[];
