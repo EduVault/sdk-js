@@ -62,11 +62,6 @@ export const loadPasswordRedirect = async ({
     // this call is extra, but it checks to make sure the cookie works
     const loggedIn = await eduvault.api.checkAuth();
     if (!loggedIn) throw 'cookie authentication failed';
-
-    // wipe url search queries from the bar
-    const newURL = location.href.split('?')[0];
-    window.history.pushState('object', document.title, newURL);
-
     if (onLogin) onLogin();
 
     const jwtEncryptedPrivateKey = encrypt(keyStr, res.content.jwt);
