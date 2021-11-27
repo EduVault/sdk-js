@@ -89,7 +89,7 @@ export const startRemoteDB =
       if (onStart) onStart();
       const db = eduvault.db;
       if (!db) throw 'no db found';
-      console.log({ db, threadID, privateKey });
+
       const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
       const userAuth = await getUserAuth();
       // console.log({ userAuth });

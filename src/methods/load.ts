@@ -66,10 +66,9 @@ export const loadPasswordRedirect = async ({
 
     const jwtEncryptedPrivateKey = encrypt(keyStr, res.content.jwt);
     localStorage.setItem('jwtEncryptedPrivateKey', jwtEncryptedPrivateKey);
-    // console.log({ res });
 
     const threadID = ThreadID.fromString(threadIDStr);
-    if (!threadID) throw 'error restoring threadID';
+    if (!threadID || !threadID.isDefined()) throw 'error restoring threadID';
     const { db, error } = await eduvault.startLocalDB({
       onReady: onLocalReady,
     });
@@ -103,7 +102,8 @@ export const loadReturningPerson = async ({
     if (!pubKey) throw 'error pubKey not in localStorage';
     if (!threadIDstr) throw 'error threadID not in localStorage';
     const threadID = ThreadID.fromString(threadIDstr);
-    if (!threadID) throw 'error restoring threadID';
+    if (!threadID || !threadID.isDefined()) throw 'error restoring threadID';
+
     const jwts = await eduvault.api.getJwt();
 
     if (!jwts) throw 'error getting jwts';
