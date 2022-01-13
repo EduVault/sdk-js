@@ -1,7 +1,7 @@
-export const { NODE_ENV, TEST_ENV } = process.env;
-export const dev = NODE_ENV === 'development';
-export const unitTest = TEST_ENV === 'unit'; // no SSL
-export const e2eTest = TEST_ENV === 'e2e'; // no SSL (SSL through docker)
+// export const { NODE_ENV, TEST_ENV } = process.env;
+// export const dev = NODE_ENV === 'development';
+// export const unitTest = TEST_ENV === 'unit'; // no SSL
+// export const e2eTest = TEST_ENV === 'e2e'; // no SSL (SSL through docker)
 
 /** MAKE SURE THESE MATCH eduvault/core/api/src/config.ts */
 export const ROUTES = {

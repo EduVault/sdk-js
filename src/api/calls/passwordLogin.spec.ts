@@ -13,8 +13,8 @@ test('valid passwordLogin', async () => {
   if ('error' in validLogin) throw validLogin;
   const res = await eduvault.api.passwordLogin(validLogin);
   if ('error' in res) throw 'login error';
-  expect(res.content.loginToken.length).toBeGreaterThanOrEqual(3);
-  expect(res.content.jwt.length).toBeGreaterThanOrEqual(3);
+  expect(res.loginToken.length).toBeGreaterThanOrEqual(3);
+  expect(res.jwt.length).toBeGreaterThanOrEqual(3);
 });
 
 test.todo('invalid login');

@@ -50,12 +50,12 @@ export class EduvaultDB extends Database {
 }
 
 export const startLocalDB =
-  (eduvault: EduVault) =>
+  (eduvault: EduVault, name = 'eduvault') =>
   async ({ version = 1, onStart, onReady }: StartLocalDBOptions) => {
     try {
       if (onStart) onStart();
       const db = await new EduvaultDB({
-        name: 'eduvault',
+        name,
         collections: [...getCollections()],
         eduvault,
       });

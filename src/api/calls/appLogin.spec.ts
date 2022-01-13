@@ -16,10 +16,10 @@ test('valid login', async () => {
   if ('error' in res) throw 'login error';
 
   const appAuthData = {
-    loginToken: res.content.loginToken,
+    loginToken: res.loginToken,
     appID: '1',
   };
   const appLoginRes = await eduvault.api.appLogin(appAuthData);
   if ('error' in appLoginRes) throw 'login error';
-  expect(appLoginRes.content.jwt.length).toBeGreaterThanOrEqual(3);
+  expect(appLoginRes.jwt.length).toBeGreaterThanOrEqual(3);
 });

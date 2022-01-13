@@ -7,21 +7,21 @@ export interface LoginButtonOptions {
   redirectURL?: string;
   log?: boolean;
   onSuccess?: (loginURL: string) => any;
-  URL_APP?: string;
+  eduvaultAppUrl?: string;
 }
 
 /**
  * @summary Adds a link to Eduvault login page to an <a> element. Stores a `clientToken` in localStorage, used to decrypt private key later.
  * @param buttonID must be an `<a>` element
- * @param URL_APP eduvault's login page. set to `eduvault.org/login` by default
  * @param redirectURL send use back to your app after login. `window.location.href` by default
+ * @param eduvaultAppUrl eduvault's login page. set to `eduvault.org/login` by default. This should only be used for eduvault's app suite testing. for a third party app integrating eduvault you should never need to set this.
  */
 export const setupLoginButton =
   (eduvault: EduVault) =>
   ({
     buttonID,
     redirectURL,
-    URL_APP,
+    eduvaultAppUrl,
     log = false,
     onSuccess,
   }: LoginButtonOptions) => {
@@ -57,7 +57,9 @@ export const setupLoginButton =
       };
 
       const loginURL =
-        (URL_APP ?? eduvault.URL_APP) + '?' + formatQueries(loginButtonQueries);
+        (eduvaultAppUrl ?? eduvault.URL_APP) +
+        '?' +
+        formatQueries(loginButtonQueries);
 
       button.setAttribute('href', loginURL);
 

@@ -49,7 +49,7 @@ export const formatPasswordSignIn = async ({
 }) => {
   const privateKey = await PrivateKey.fromRandom();
   const pubKey = await privateKey.public.toString();
-  const newThreadID = await ThreadID.fromRandom();
+  const newThreadID = ThreadID.fromRandom();
   const threadIDStr = newThreadID.toString();
 
   const pwEncryptedPrivateKey = encrypt(privateKey.toString(), password);

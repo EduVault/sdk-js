@@ -7,7 +7,7 @@ export const passwordLogin =
       ROUTES.PASSWORD_AUTH,
       options
     );
-    if ('error' in res) return { error: res };
+    if ('error' in res) return { error: res.error };
     if (res.code !== 200 || !res.content.loginToken) return { error: res };
-    else return res;
+    else return res.content;
   };

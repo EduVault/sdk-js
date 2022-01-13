@@ -56,7 +56,7 @@ export const loadPasswordRedirect = async ({
     };
     const res = await eduvault.api.appLogin(appAuthData);
     if ('error' in res) throw res.error;
-    const { jwt } = res.content;
+    const { jwt } = res;
     if (!jwt) throw 'no jwt received';
 
     // this call is extra, but it checks to make sure the cookie works
@@ -64,7 +64,7 @@ export const loadPasswordRedirect = async ({
     if (!loggedIn) throw 'cookie authentication failed';
     if (onLogin) onLogin();
 
-    const jwtEncryptedPrivateKey = encrypt(keyStr, res.content.jwt);
+    const jwtEncryptedPrivateKey = encrypt(keyStr, jwt);
     localStorage.setItem('jwtEncryptedPrivateKey', jwtEncryptedPrivateKey);
 
     const threadID = ThreadID.fromString(threadIDStr);
@@ -108,7 +108,7 @@ export const loadReturningPerson = async ({
 
     if (!jwts) throw 'error getting jwts';
     if ('error' in jwts) throw jwts.error;
-    const { jwt, oldJwt } = jwts.content;
+    const { jwt, oldJwt } = jwts;
     if (!jwt) throw 'no jwt received';
 
     if (onLogin) onLogin();

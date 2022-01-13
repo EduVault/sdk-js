@@ -45,7 +45,7 @@ export const pwLogin =
       const { redirectUrlWithQueries, error } =
         await handlePasswordSignInResponse({
           eduvault,
-          ...loginRes.content,
+          ...loginRes,
           password,
           clientToken,
           redirectURL,
@@ -57,7 +57,7 @@ export const pwLogin =
       window.location.assign(redirectUrlWithQueries);
 
       return {
-        ...loginRes.content,
+        ...loginRes,
         redirectUrlWithQueries,
       };
     } catch (error) {
