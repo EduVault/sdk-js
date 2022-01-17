@@ -4,6 +4,7 @@
   "private": false,
   "access": "public",
   "description": "Quickly create and authenticate a user-owned database",
+  "main": "./dist/cjs/index.js",
   "exports": {
     "require": "./dist/cjs/index.js",
     "import": "./dist/esm/wrapper.js"
