@@ -1,4 +1,4 @@
-import EduVault from '../..';
+import EduVault from '../../index';
 const eduvault = new EduVault({ appID: '1' });
 
 test('getJwt', async () => {

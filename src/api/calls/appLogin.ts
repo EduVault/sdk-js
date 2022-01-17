@@ -1,4 +1,4 @@
-import EduVault, { AppAuthReq, AppAuthRes } from '../../';
+import EduVault, { AppAuthReq, AppAuthRes } from '../../index';
 import { ROUTES } from '../../config';
 
 export const appLogin = (eduvault: EduVault) => async (data: AppAuthReq) => {

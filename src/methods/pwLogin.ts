@@ -5,7 +5,7 @@ import {
   LoginButtonQueries,
   LoginRedirectQueries,
   PasswordLoginRes,
-} from '..';
+} from '../index';
 import { formatQueries, parseQueries } from '../api/helpers';
 import {
   decryptAndTestKey,
@@ -34,6 +34,7 @@ export const pwLogin =
         redirectURL,
         appID,
       });
+      if (eduvault.log) console.log('loginData', loginData);
 
       if ('error' in loginData) throw loginData.error;
 

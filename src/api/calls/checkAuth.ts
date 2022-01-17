@@ -1,4 +1,4 @@
-import EduVault, { AuthCheckRes } from '../..';
+import EduVault, { AuthCheckRes } from '../../index';
 import { ROUTES } from '../../config';
 
 export const checkAuth = (eduvault: EduVault) => async () => {

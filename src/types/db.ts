@@ -6,7 +6,7 @@ import {
 } from '@textile/threaddb/dist/cjs/local/collection';
 import { Instance } from '@textile/threaddb/dist/cjs/local/document';
 
-import EduVault, { INote, IPerson } from '..';
+import EduVault, { INote, IPerson } from '../index';
 
 export { CollectionConfig, Instance };
 
@@ -22,6 +22,8 @@ export interface StartLocalDBOptions {
   version?: number;
   onStart?: () => any;
   onReady?: (db: Database) => any;
+  name: string;
+  onChange?: () => any;
 }
 
 export interface DBOptions {
@@ -30,6 +32,9 @@ export interface DBOptions {
   eduvault: EduVault;
 }
 
+/**
+ * Pulls changes from remote, then applies changes over local, then pushes final result to remote.
+ */
 export type EduVaultSync = (collectionNames: string[]) => Promise<
   | {
       result: string[];
@@ -40,11 +45,20 @@ export type EduVaultSync = (collectionNames: string[]) => Promise<
       result?: undefined;
     }
 >;
+
+/**
+ * Pushes changes to remote.
+ * If it fails it will add current collection to backlog.
+ * Tries the backlog on each call.
+ */
 export type EduVaultPush = (collectionNames: string[]) => Promise<
   | {
       error: unknown;
     }
-  | undefined
+  | {
+      success: string[];
+      backlog: string[];
+    }
 >;
 export interface StartRemoteDBOptions {
   threadID: ThreadID;

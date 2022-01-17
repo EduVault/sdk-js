@@ -1,4 +1,4 @@
-import EduVault, { PasswordLoginReq, PasswordLoginRes } from '../../';
+import EduVault, { PasswordLoginReq, PasswordLoginRes } from '../../index';
 import { ROUTES } from '../../config';
 
 export const passwordLogin =

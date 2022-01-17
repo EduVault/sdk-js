@@ -1,6 +1,6 @@
 import { PrivateKey, ThreadID } from '@textile/threaddb';
 
-import { EduVault, LoginRedirectQueries } from '..';
+import { EduVault, LoginRedirectQueries } from '../index';
 import { parseQueries } from '../api/helpers';
 import { decryptAndTestKey } from '../utils';
 import { decrypt, encrypt } from '../utils';
@@ -71,6 +71,7 @@ export const loadPasswordRedirect = async ({
     if (!threadID || !threadID.isDefined()) throw 'error restoring threadID';
     const { db, error } = await eduvault.startLocalDB({
       onReady: onLocalReady,
+      name: 'eduvault-' + privateKey.pubKey.toString(),
     });
     if (error || !db) throw error;
 
@@ -150,6 +151,7 @@ export const loadReturningPerson = async ({
 
     const { db, error } = await eduvault.startLocalDB({
       onReady: onLocalReady,
+      name: 'eduvault-' + privateKey.pubKey.toString(),
     });
     if (error || !db) throw error;
 

@@ -1,4 +1,4 @@
-import EduVault, { LoginButtonQueries } from '..';
+import EduVault, { LoginButtonQueries } from '../index';
 import { formatQueries, parseQueries } from '../api/helpers';
 import { window } from '../setupTests';
 import { password, username } from '../utils/testUtils';

@@ -1,4 +1,4 @@
-import EduVault, { GetJWTRes } from '../../';
+import EduVault, { GetJWTRes } from '../../index';
 import { ROUTES } from '../../config';
 
 export const getJwt = (eduvault: EduVault) => async () => {

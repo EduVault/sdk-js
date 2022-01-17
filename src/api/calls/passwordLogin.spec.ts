@@ -1,4 +1,4 @@
-import EduVault from '../..';
+import EduVault from '../../index';
 import { formatPasswordSignIn } from '../../utils';
 import { password, username } from '../../utils/testUtils';
 const eduvault = new EduVault({ appID: '1' });
