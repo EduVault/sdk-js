@@ -155,8 +155,8 @@ export const startRemoteDB =
       // }
 
       // console.log({ remote, token });
-      remote.config.metadata?.set('x-textile-thread-name', db.dexie.name);
-      remote.config.metadata?.set('x-textile-thread', db.id || '');
+      // remote.config.metadata?.set('x-textile-thread-name', db.dexie.name);
+      // remote.config.metadata?.set('x-textile-thread', db.id || '');
       if (onReady) onReady(db);
       return { db, remote, token, getUserAuth };
     } catch (error) {
