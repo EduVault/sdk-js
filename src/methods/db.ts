@@ -1,6 +1,5 @@
 import { Buffer } from 'buffer';
-
-import { UserAuth as PersonAuth, PrivateKey } from '@textile/hub';
+import { UserAuth as PersonAuth, PrivateKey, Client } from '@textile/hub';
 import { Database, JSONSchema } from '@textile/threaddb';
 import { difference, isEqual } from 'lodash';
 
@@ -15,6 +14,7 @@ import {
   StartLocalDBOptions,
   StartRemoteDBOptions,
 } from '../types/db';
+import onChangeLibrary from 'on-change';
 
 /**
  * "Registered" or "official" collections are to be submitted through github pull request and will be in the collections folder
@@ -33,15 +33,26 @@ const getCollections = (): CollectionConfig[] => {
 export class EduvaultDB extends Database {
   constructor({ name, collections, eduvault }: DBOptions) {
     super(name, ...collections);
+    /**
+     * Pushes changes to remote database
+     */
     this.push = push(eduvault);
     this.sync = sync(eduvault);
+    this.isSyncing = false;
   }
-
   push: EduVaultPush;
   /**
    * Pulls a collection from the remote and applies local changes on top of it. Also creates a snapshot of each the local and remote state before sync stored in localStorage in case the user wants to roll back changes after the sync
    */
   sync: EduVaultSync;
+  isSyncing: boolean;
+  setIsSyncing = (isSyncing: boolean) => (this.isSyncing = isSyncing);
+  getIsSyncing = () => this.isSyncing;
+  /**
+   *
+   * core collections are the ones that are registered in the collections folder. They will have typescript definitions and will be available to use in the sdk.
+   * TODO : Developers can also add their own locally defined collections but other apps won't be able to find them as easily.
+   */
   setCoreCollections = (payload: typeof this.coreCollections) =>
     (this.coreCollections = payload);
   coreCollections: CoreCollections = {
@@ -50,8 +61,14 @@ export class EduvaultDB extends Database {
 }
 
 export const startLocalDB =
-  (eduvault: EduVault, name = 'eduvault') =>
-  async ({ version = 1, onStart, onReady }: StartLocalDBOptions) => {
+  (eduvault: EduVault) =>
+  async ({
+    version = 1,
+    onStart,
+    onReady,
+    name,
+    onChange = () => null,
+  }: StartLocalDBOptions) => {
     try {
       if (onStart) onStart();
       const db = await new EduvaultDB({
@@ -68,13 +85,29 @@ export const startLocalDB =
       // console.log('started local db', { db });
       // const count = await db.collection('deck')?.count({});
       // console.log('count', { count });
-      await eduvault.setDb(db);
-      if (onReady) onReady(db);
-      return { db };
+
+      const dbWithListener = onChangeLibrary(db, onChange);
+
+      await eduvault.setDb(dbWithListener);
+      if (onReady) onReady(dbWithListener);
+      return { db: dbWithListener };
     } catch (error) {
       return { error };
     }
   };
+
+export const startCLientDB = async ({
+  getUserAuth,
+}: {
+  getUserAuth: () => Promise<PersonAuth>;
+}) => {
+  const client = await Client.withUserAuth(getUserAuth);
+  const threads = await client.listThreads();
+  console.log('connected to client with threads', { threads });
+  console.log({ client, threads });
+  const dbs = await client.listDBs();
+  console.log({ dbs });
+};
 
 export const startRemoteDB =
   (eduvault: EduVault) =>
@@ -95,11 +128,7 @@ export const startRemoteDB =
       // console.log({ userAuth });
 
       /** can test against client */
-      // const client = await Client.withUserAuth(getUserAuth);
-      // const threads = await client.listThreads();
-      // console.log({ client, threads });
-      // const dbs = await client.listDBs();
-      // console.log({ dbs });
+
       const remote = await db.remote.setUserAuth(userAuth);
       // Grab the token, save it, or just use it
       const token = await remote.authorize(privateKey);
@@ -129,7 +158,7 @@ export const startRemoteDB =
       remote.config.metadata?.set('x-textile-thread-name', db.dexie.name);
       remote.config.metadata?.set('x-textile-thread', db.id || '');
       if (onReady) onReady(db);
-      return { db, remote, token };
+      return { db, remote, token, getUserAuth };
     } catch (error) {
       console.log({ error });
       return { error };
@@ -173,7 +202,7 @@ export const addToPushBacklog = (collectionName: string) => {
     const backlogString = localStorage.getItem('pushBacklog');
     if (!backlogString) backlog = [];
     else backlog = JSON.parse(backlogString);
-    backlog.push(collectionName);
+    if (!backlog.includes(collectionName)) backlog.push(collectionName);
     return { backlog };
   } catch (error) {
     return { error };
@@ -183,10 +212,12 @@ export const addToPushBacklog = (collectionName: string) => {
 export const push =
   (eduvault: EduVault) => async (collectionNames: string[]) => {
     try {
-      const remote = eduvault.db?.remote;
+      const db = eduvault.db;
+      if (!db) throw 'no db found';
+      const remote = db?.remote;
       if (!remote) throw 'no remote found';
 
-      eduvault.isSyncing = true;
+      db.setIsSyncing(true);
       console.log('starting push');
       const collectionsToPush = [...collectionNames];
       const previousBacklog = getPushBacklog();
@@ -211,18 +242,16 @@ export const push =
             if (error || !backlog) throw error;
             return (result.backlog = backlog);
           }
-          console.log({ remote });
           await remote.push(collectionName);
           return result.success.push(collectionName);
         } catch (error) {
+          const { backlog } = addToPushBacklog(collectionName);
+          if (backlog) result.backlog = backlog;
           return { error };
         }
       });
-
-      eduvault.isSyncing = false;
-      return;
+      return result;
     } catch (error) {
-      eduvault.isSyncing = false;
       return { error };
     }
   };
@@ -231,18 +260,19 @@ export const sync = (eduvault: EduVault) => {
   const sync = async (collectionNames: string[]) => {
     console.log('starting sync');
     try {
+      const db = eduvault.db;
+      if (!db) throw 'no db found';
       const remote = eduvault.db?.remote;
       if (!remote) throw 'no remote found';
       const online = await eduvault.api.ping();
       if (!online) throw 'must be online to sync';
-
+      db.setIsSyncing(true);
       const syncCollection = async (collectionName: string) => {
-        eduvault.isSyncing = true;
         const localInstances = await eduvault?.db
           ?.collection(collectionName)
           ?.find()
           .sortBy('_id');
-
+        console.log('db.isSyncing ', db.isSyncing);
         if (localInstances)
           setSnapshot(collectionName, localInstances, 'local');
 
@@ -277,15 +307,17 @@ export const sync = (eduvault: EduVault) => {
         // if (afterApplyStash) return result.push(afterApplyStash);
 
         // if (!areEqual)
-        eduvault.isSyncing = false;
+        db.setIsSyncing(false);
         return collectionName;
       };
 
       const result = await Promise.all(collectionNames.map(syncCollection));
       return { result };
     } catch (error) {
-      eduvault.isSyncing = false;
+      if (eduvault?.db?.getIsSyncing()) eduvault.db.setIsSyncing(false);
       return { error };
+    } finally {
+      if (eduvault?.db?.getIsSyncing()) eduvault.db.setIsSyncing(false);
     }
   };
   return sync;

@@ -48,9 +48,6 @@ class EduVault {
   load = load(this);
   setupLoginButton = setupLoginButton(this);
 
-  // status
-  isSyncing = false;
-
   // credentials
   privateKey?: PrivateKey;
   threadID?: ThreadID | null;
