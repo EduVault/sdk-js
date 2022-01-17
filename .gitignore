@@ -1,6 +1,7 @@
 .idea/*
 .nyc_output
-dist
+dist/cjs
+dist/tsconfig.cjs.tsbuildinfo
 node_modules
 test
 src/**.js

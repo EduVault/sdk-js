@@ -4,31 +4,33 @@
   "private": false,
   "access": "public",
   "description": "Quickly create and authenticate a user-owned database",
-  "main": "dist/main/index.js",
-  "typings": "dist/main/index.d.ts",
-  "module": "dist/module/index.js",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/wrapper.js"
+},
+  "typings": "dist/cjs/index.d.ts",
+  "engines": {
+    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+  },
   "repository": "https://github.com/eduvault/sdk-js",
   "license": "MIT",
   "keywords": [],
   "scripts": {
-    "clean:dist": "rimraf dist",
+    "clean:dist": "rimraf dist/cjs",
     "clean:modules": "rimraf node_modules package-lock.json",
     "inst": "npm install",
     "prepublishOnly": "run-s build",
-    "prebuild": "npm run  clean:dist",
+    "prebuild": "npm run clean:dist",
     "build": "run-p build:*",
-    "build:main": "tsc -p tsconfig.main.json",
-    "build:module": "tsc -p tsconfig.module.json",
-    "watch:main": "tsc -p tsconfig.main.json -w",
-    "watch:module": "tsc -p tsconfig.module.json -w",
-    "dev": "run-p watch:module watch:main",
-    "dev:watch": "TS_NODE_PROJECT='./tsconfig.main.json' ts-node-dev --inspect --poll --respawn ./src src/index.ts",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "watch:cjs": "tsc -p tsconfig.cjs.json -w",
+    "dev": "run-p watch:cjs",
+    "dev:watch": "TS_NODE_PROJECT='./tsconfig.cjs.json' ts-node-dev --inspect --poll --respawn ./src src/index.ts",
     "test": "jest --env=./jest-env.js --detectOpenHandles",
-    "test:watch": "jest --env=./jest-env.js --detectOpenHandles --watch"
+    "test:watch": "jest --env=./jest-env.js --detectOpenHandles --watch",
+    "test:clear-cache": "jest --clearCache"
   },
-  "engines": {
-    "node": ">=10"
-  },
+
   "dependencies": {
     "@textile/hub": "^6.3.2",
     "@textile/threaddb": "^0.2.2",
@@ -70,8 +72,8 @@
     "typescript": "^4.5.4"
   },
   "files": [
-    "dist/main",
-    "dist/module",
+    "dist/cjs",
+    "dist/esm",
     "!**/*.spec.*",
     "!**/*.json",
     "LICENSE",
