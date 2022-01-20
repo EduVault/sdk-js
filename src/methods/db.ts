@@ -14,7 +14,6 @@ import {
   StartLocalDBOptions,
   StartRemoteDBOptions,
 } from '../types/db';
-import onChangeLibrary from 'on-change';
 
 /**
  * "Registered" or "official" collections are to be submitted through github pull request and will be in the collections folder
@@ -62,13 +61,7 @@ export class EduvaultDB extends Database {
 
 export const startLocalDB =
   (eduvault: EduVault) =>
-  async ({
-    version = 1,
-    onStart,
-    onReady,
-    name,
-    onChange = () => null,
-  }: StartLocalDBOptions) => {
+  async ({ version = 1, onStart, onReady, name }: StartLocalDBOptions) => {
     try {
       if (onStart) onStart();
       const db = await new EduvaultDB({
@@ -86,11 +79,9 @@ export const startLocalDB =
       // const count = await db.collection('deck')?.count({});
       // console.log('count', { count });
 
-      const dbWithListener = onChangeLibrary(db, onChange);
-
-      await eduvault.setDb(dbWithListener);
-      if (onReady) onReady(dbWithListener);
-      return { db: dbWithListener };
+      await eduvault.setDb(db);
+      if (onReady) onReady(db);
+      return { db };
     } catch (error) {
       return { error };
     }
@@ -125,14 +116,13 @@ export const startRemoteDB =
 
       const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
       const userAuth = await getUserAuth();
-      // console.log({ userAuth });
-
-      /** can test against client */
-
       const remote = await db.remote.setUserAuth(userAuth);
-      // Grab the token, save it, or just use it
       const token = await remote.authorize(privateKey);
-      // save the token encrypted with jwt locally. on refresh, get token with cookie.
+      // how can I use the token/userAuth here? I don't want to have to call `getUserAuth` again because it calls the server again with the wholse websockets dance.
+      // const client = Client.withUserAuth(getUserAuth);
+      // client.listen(threadID, [{}], () => {
+      //   console.log('listener triggered');
+      // });
 
       try {
         remote.id = threadID.toString();
