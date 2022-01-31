@@ -1,9 +1,15 @@
 import { Buffer } from 'buffer';
 import { UserAuth as PersonAuth, PrivateKey, Client } from '@textile/hub';
 import { Database, JSONSchema } from '@textile/threaddb';
-import { difference, isEqual } from 'lodash';
-
-import { collectionConfig, INote, noteKey, personKey } from '../collections';
+// import { difference, isEqual } from 'lodash';
+import { DBCoreMutateRequest, DBCoreMutateResponse } from 'dexie';
+import {
+  collectionConfig,
+  INote,
+  IPerson,
+  noteKey,
+  personKey,
+} from '../collections';
 import { CoreCollections, EduVault } from '../index';
 import { Instances, WsMessageData } from '../types';
 import {
@@ -17,7 +23,7 @@ import {
 
 /**
  * "Registered" or "official" collections are to be submitted through github pull request and will be in the collections folder
- * but these won't be the most current unles sdk version is up to date. later consider adding an api call to get the latest ones
+ * but these won't be the most current unless sdk version is up to date. later consider adding an api call to get the latest ones
  // TODO: call the api to get the most recent unregistered 
  */
 const getCollections = (): CollectionConfig[] => {
@@ -57,22 +63,78 @@ export class EduvaultDB extends Database {
   coreCollections: CoreCollections = {
     Note: undefined,
   };
+
+  registerLocalListener = (
+    onChange: DexieMutationEvent,
+    collections?: string[],
+    actionTypes?: string[]
+  ) =>
+    setUpLocalListener(
+      this,
+      (req, res, tableName) => {
+        if (actionTypes && actionTypes.length > 0) {
+          if (actionTypes.includes(req.type)) {
+            return onChange(req, res, tableName);
+          }
+          return null;
+        }
+        return onChange(req, res, tableName);
+      },
+      collections
+    );
 }
 
+export type DexieMutationEvent = (
+  req: DBCoreMutateRequest,
+  res: DBCoreMutateResponse,
+  tableName?: string
+) => any;
+
+export const setUpLocalListener = (
+  db: EduvaultDB,
+  onChange: DexieMutationEvent,
+  tables: string[] = []
+) => {
+  return db.dexie.use({
+    stack: 'dbcore',
+    name: 'EduVault-Listener',
+    create(downlevelDatabase) {
+      return {
+        ...downlevelDatabase,
+        table(tableName) {
+          const downlevelTable = downlevelDatabase.table(tableName);
+          return {
+            ...downlevelTable,
+            mutate: (req) => {
+              return downlevelTable.mutate(req).then((res) => {
+                if (tables.length === 0) onChange(req, res, tableName);
+                else if (tables.includes(tableName))
+                  onChange(req, res, tableName);
+                return res;
+              });
+            },
+          };
+        },
+      };
+    },
+  });
+};
 export const startLocalDB =
   (eduvault: EduVault) =>
   async ({ version = 1, onStart, onReady, name }: StartLocalDBOptions) => {
     try {
+      if (eduvault.log) console.log('starting local db', version);
       if (onStart) onStart();
       const db = await new EduvaultDB({
         name,
         collections: [...getCollections()],
         eduvault,
       });
-      await db.open(version);
+      db.open(version);
+
       await db.setCoreCollections({
         Note: db.collection<INote>(noteKey),
-        Person: db.collection(personKey),
+        Person: db.collection<IPerson>(personKey),
       });
 
       // console.log('started local db', { db });
@@ -207,8 +269,7 @@ export const push =
       const remote = db?.remote;
       if (!remote) throw 'no remote found';
 
-      db.setIsSyncing(true);
-      console.log('starting push');
+      if (eduvault.log) console.log('starting push');
       const collectionsToPush = [...collectionNames];
       const previousBacklog = getPushBacklog();
 
@@ -248,7 +309,7 @@ export const push =
 
 export const sync = (eduvault: EduVault) => {
   const sync = async (collectionNames: string[]) => {
-    console.log('starting sync');
+    if (eduvault.log) console.log('starting sync ', collectionNames);
     try {
       const db = eduvault.db;
       if (!db) throw 'no db found';
@@ -262,7 +323,6 @@ export const sync = (eduvault: EduVault) => {
           ?.collection(collectionName)
           ?.find()
           .sortBy('_id');
-        console.log('db.isSyncing ', db.isSyncing);
         if (localInstances)
           setSnapshot(collectionName, localInstances, 'local');
 
@@ -276,15 +336,15 @@ export const sync = (eduvault: EduVault) => {
         if (remoteInstances)
           setSnapshot(collectionName, remoteInstances, 'remote');
 
-        const areEqual = isEqual(localInstances, remoteInstances);
-        console.log({ localInstances, remoteInstances, areEqual });
+        // TODO: re-institute this
+        // const areEqual = isEqual(localInstances, remoteInstances);
 
         // for debugging
-        if (!areEqual && localInstances && remoteInstances) {
-          const remoteDiffs = difference(remoteInstances, localInstances);
-          const localDiffs = difference(localInstances, remoteInstances);
-          console.log({ remoteDiffs, localDiffs });
-        }
+        // if (!areEqual && localInstances && remoteInstances) {
+        //   const remoteDiffs = difference(remoteInstances, localInstances);
+        //   const localDiffs = difference(localInstances, remoteInstances);
+        //   console.log({ remoteDiffs, localDiffs });
+        // }
 
         await remote.applyStash(collectionName);
 
@@ -304,10 +364,10 @@ export const sync = (eduvault: EduVault) => {
       const result = await Promise.all(collectionNames.map(syncCollection));
       return { result };
     } catch (error) {
-      if (eduvault?.db?.getIsSyncing()) eduvault.db.setIsSyncing(false);
+      if (eduvault?.db) eduvault.db.setIsSyncing(false);
       return { error };
     } finally {
-      if (eduvault?.db?.getIsSyncing()) eduvault.db.setIsSyncing(false);
+      if (eduvault?.db) eduvault.db.setIsSyncing(false);
     }
   };
   return sync;

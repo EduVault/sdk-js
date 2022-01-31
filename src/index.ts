@@ -32,6 +32,7 @@ class EduVault {
   // init options
   appID = '1'; // 1 is the default home app
   log? = false;
+  // devMode? = false; // TODO: implement dev mode to use same dummy threadID each time
   buttonID?: string;
   redirectURL?: string;
 

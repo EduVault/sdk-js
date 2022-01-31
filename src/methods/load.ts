@@ -4,6 +4,7 @@ import { EduVault, LoginRedirectQueries } from '../index';
 import { parseQueries } from '../api/helpers';
 import { decryptAndTestKey } from '../utils';
 import { decrypt, encrypt } from '../utils';
+import { startCLientDB } from '.';
 
 // import { ulid } from 'ulid';
 export interface Credentials {
@@ -11,6 +12,34 @@ export interface Credentials {
   threadID: ThreadID;
   jwt: string;
 }
+
+const startLocal = async (
+  eduvault: EduVault,
+  onReady: LoadOptions['onLocalReady'],
+  privateKey: PrivateKey
+) => {
+  const { db, error } = await eduvault.startLocalDB({
+    onReady,
+    name: 'eduvault-' + privateKey.pubKey.toString(),
+  });
+  if (error || !db) throw error;
+  return db;
+};
+
+const startRemote = async (
+  eduvault: EduVault,
+  threadID: ThreadID,
+  jwt: string,
+  privateKey: PrivateKey
+) => {
+  const remote = await eduvault.startRemoteDB({
+    threadID,
+    jwt,
+    privateKey,
+  });
+  if (remote.error) throw remote.error;
+  return remote;
+};
 
 /**
  * 
@@ -29,6 +58,7 @@ export const loadPasswordRedirect = async ({
   options: LoadOptions;
 }) => {
   try {
+    if (eduvault.log) console.log('loadPasswordRedirect');
     if (
       !pwEncryptedPrivateKey ||
       !clientTokenEncryptedKey ||
@@ -39,8 +69,8 @@ export const loadPasswordRedirect = async ({
       throw 'login redirect query incomplete';
     const clientToken = localStorage.getItem('clientToken');
     if (!clientToken) throw 'no client token in localStorage';
+
     // decrypt keys with clientToken
-    // console.log({ clientTokenEncryptedKey, clientToken, pubKey });
     const privateKey = await decryptAndTestKey(
       clientTokenEncryptedKey,
       clientToken,
@@ -67,22 +97,20 @@ export const loadPasswordRedirect = async ({
     const jwtEncryptedPrivateKey = encrypt(keyStr, jwt);
     localStorage.setItem('jwtEncryptedPrivateKey', jwtEncryptedPrivateKey);
 
+    await startLocal(eduvault, onLocalReady, privateKey);
+
     const threadID = ThreadID.fromString(threadIDStr);
     if (!threadID || !threadID.isDefined()) throw 'error restoring threadID';
-    const { db, error } = await eduvault.startLocalDB({
-      onReady: onLocalReady,
-      name: 'eduvault-' + privateKey.pubKey.toString(),
-    });
-    if (error || !db) throw error;
 
-    const remote = await eduvault.startRemoteDB({
-      threadID,
-      jwt,
-      privateKey,
-    });
-    if (remote.error) throw remote.error;
-    else if (onReady) onReady();
+    await startRemote(eduvault, threadID, jwt, privateKey);
+
+    if (onReady) onReady();
+    // if (remote.getUserAuth) {
+    //   startCLientDB({ getUserAuth: remote.getUserAuth });
+    // }
   } catch (error) {
+    if (eduvault.log) console.log('loadPasswordRedirect error');
+    if (eduvault.log) console.error(error);
     if (onError) onError(JSON.stringify(error));
   }
 };
@@ -97,6 +125,7 @@ export const loadReturningPerson = async ({
   options: LoadOptions;
 }) => {
   try {
+    if (eduvault.log) console.log('loadReturningPerson');
     const pubKey = localStorage.getItem('pubKey');
     const threadIDstr = localStorage.getItem('threadIDStr');
 
@@ -130,6 +159,7 @@ export const loadReturningPerson = async ({
         );
         if (!privateKey) throw 'first pass unable to rehydrate';
       } catch (error) {
+        // try with last (old) jwt
         if (oldJwt) {
           privateKey = await decryptAndTestKey(
             jwtEncryptedPrivateKey,
@@ -146,23 +176,22 @@ export const loadReturningPerson = async ({
       return privateKey;
     };
     const privateKey = await getKeyFromJwts({ jwt, oldJwt });
-
     if (!privateKey) throw 'failed getting private key';
 
-    const { db, error } = await eduvault.startLocalDB({
-      onReady: onLocalReady,
-      name: 'eduvault-' + privateKey.pubKey.toString(),
-    });
-    if (error || !db) throw error;
+    await startLocal(eduvault, onLocalReady, privateKey);
 
-    const remote = await eduvault.startRemoteDB({
-      threadID,
-      jwt,
-      privateKey,
-    });
-    if (remote.error) throw remote.error;
-    else if (onReady) onReady();
+    const remote = await startRemote(eduvault, threadID, jwt, privateKey);
+
+    //doesn't seem to reach here
+    if (eduvault.log)
+      console.log('remote started, remote.getUserAuth', remote.getUserAuth);
+    if (remote.getUserAuth) {
+      startCLientDB({ getUserAuth: remote.getUserAuth });
+    }
+    if (onReady) onReady();
   } catch (error) {
+    if (eduvault.log) console.log('loadReturningPerson error');
+    if (eduvault.log) console.error(error);
     if (onError) onError(JSON.stringify(error));
   }
 };
@@ -186,6 +215,7 @@ export interface LoadOptions {
 }
 export const load = (eduvault: EduVault) => async (options: LoadOptions) => {
   try {
+    if (eduvault.log) console.log('load');
     if (options.onStart) options.onStart();
 
     /*
@@ -197,7 +227,8 @@ export const load = (eduvault: EduVault) => async (options: LoadOptions) => {
         window.location.href.split('?')[1]
       ) as LoginRedirectQueries;
     } catch (error) {
-      console.log('error loading queries', error);
+      if (eduvault.log) console.log('error loading queries:');
+      if (eduvault.log) console.error(error);
     }
     // if (options.log) console.log({ queries });
     // call loading callbacks
@@ -224,6 +255,7 @@ export const load = (eduvault: EduVault) => async (options: LoadOptions) => {
         options,
       });
   } catch (error) {
+    console.log('loading error:');
     console.error(error);
     if (options.onError) options.onError(JSON.stringify(error));
   }

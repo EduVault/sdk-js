@@ -10,4 +10,5 @@ export const init = (eduvault: EduVault, options: initOptions) => {
   if (options.URL_API) eduvault.URL_API = options.URL_API;
   if (options.URL_APP) eduvault.URL_APP = options.URL_APP;
   if (options.URL_WS_API) eduvault.URL_WS_API = options.URL_WS_API;
+  // if (options.devMode) eduvault.devMode = options.devMode;
 };

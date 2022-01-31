@@ -8,6 +8,7 @@ export interface initOptions {
   URL_API?: string;
   URL_APP?: string;
   URL_WS_API?: string;
+  // devMode?: boolean;
 }
 
 export type AuthType =
