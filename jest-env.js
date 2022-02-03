@@ -1,4 +1,4 @@
-const Environment = require('jest-environment-node');
+const Environment = require('jest-environment-jsdom');
 const fetch = require('isomorphic-fetch');
 const dotenv = require('dotenv');
 if (!process.env.GITHUB_ACTIONS) dotenv.config({ path: './src/.env' });

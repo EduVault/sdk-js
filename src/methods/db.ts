@@ -43,6 +43,7 @@ export class EduvaultDB extends Database {
      */
     this.push = push(eduvault);
     this.sync = sync(eduvault);
+    this.onSyncingChange = () => false;
     this.isSyncing = false;
   }
   push: EduVaultPush;
@@ -50,8 +51,15 @@ export class EduvaultDB extends Database {
    * Pulls a collection from the remote and applies local changes on top of it. Also creates a snapshot of each the local and remote state before sync stored in localStorage in case the user wants to roll back changes after the sync
    */
   sync: EduVaultSync;
+
+  onSyncingChange: () => any = () => this.getIsSyncing();
   isSyncing: boolean;
-  setIsSyncing = (isSyncing: boolean) => (this.isSyncing = isSyncing);
+  setIsSyncing = (isSyncing: boolean) => {
+    if (isSyncing !== this.isSyncing) {
+      this.isSyncing = isSyncing;
+      this.onSyncingChange();
+    }
+  };
   getIsSyncing = () => this.isSyncing;
   /**
    *
@@ -130,7 +138,7 @@ export const startLocalDB =
         collections: [...getCollections()],
         eduvault,
       });
-      await db.open(version);
+      db.open(version);
 
       await db.setCoreCollections({
         Note: db.collection<INote>(noteKey),
