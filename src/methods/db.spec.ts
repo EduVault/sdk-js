@@ -54,7 +54,7 @@ describe('EduvaultDB', () => {
     const listenSpy = jest.fn();
 
     db?.registerLocalListener(async (req, res, tableName) => {
-      console.log('table updated', tableName);
+      // console.log('table updated', tableName);
       listenSpy();
     });
     const Person = await db?.coreCollections.Person;
