@@ -20,7 +20,6 @@ import {
   StartLocalDBOptions,
   StartRemoteDBOptions,
 } from '../types/db';
-import { wait } from '../utils';
 
 /**
  * "Registered" or "official" collections are to be submitted through github pull request and will be in the collections folder
@@ -131,8 +130,7 @@ export const startLocalDB =
         collections: [...getCollections()],
         eduvault,
       });
-      db.open(version);
-      await wait(0.1); // sometimes dexie gives an error if you try to use te db too quickly
+      await db.open(version);
 
       await db.setCoreCollections({
         Note: db.collection<INote>(noteKey),
