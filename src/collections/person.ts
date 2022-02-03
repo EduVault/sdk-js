@@ -10,7 +10,7 @@ import {
 export interface IPerson {
   _id: string;
   username: string;
-  birthDay: number;
+  birthDay?: number;
 }
 export type PersonCollection = Collection<IPerson>;
 export const personKey = 'person';

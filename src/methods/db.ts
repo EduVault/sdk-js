@@ -20,13 +20,14 @@ import {
   StartLocalDBOptions,
   StartRemoteDBOptions,
 } from '../types/db';
+import { wait } from '../utils';
 
 /**
  * "Registered" or "official" collections are to be submitted through github pull request and will be in the collections folder
  * but these won't be the most current unless sdk version is up to date. later consider adding an api call to get the latest ones
  // TODO: call the api to get the most recent unregistered 
  */
-const getCollections = (): CollectionConfig[] => {
+export const getCollections = (): CollectionConfig[] => {
   // const collectionsFromApi = [];
   const officialCollections = collectionConfig;
   return [
@@ -131,6 +132,7 @@ export const startLocalDB =
         eduvault,
       });
       db.open(version);
+      await wait(0.1); // sometimes dexie gives an error if you try to use te db too quickly
 
       await db.setCoreCollections({
         Note: db.collection<INote>(noteKey),
