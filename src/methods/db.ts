@@ -1,6 +1,8 @@
 import { Buffer } from 'buffer';
 import { UserAuth as PersonAuth, PrivateKey, Client } from '@textile/hub';
-import { Database, JSONSchema } from '@textile/threaddb';
+import { Context } from '@textile/context';
+
+import { Database, JSONSchema, Remote } from '@textile/threaddb';
 // import { difference, isEqual } from 'lodash';
 import { DBCoreMutateRequest, DBCoreMutateResponse } from 'dexie';
 import {
@@ -21,6 +23,8 @@ import {
   StartRemoteDBOptions,
 } from '../types/db';
 
+const textileTokenStorageName = 'eduvault-textile-remote-token';
+const remoteConfigStorageName = 'eduvault-textile-remote-config';
 /**
  * "Registered" or "official" collections are to be submitted through github pull request and will be in the collections folder
  * but these won't be the most current unless sdk version is up to date. later consider adding an api call to get the latest ones
@@ -38,14 +42,16 @@ export const getCollections = (): CollectionConfig[] => {
 export class EduvaultDB extends Database {
   constructor({ name, collections, eduvault }: DBOptions) {
     super(name, ...collections);
-    /**
-     * Pushes changes to remote database
-     */
     this.push = push(eduvault);
     this.sync = sync(eduvault);
     this.onSyncingChange = () => false;
     this.isSyncing = false;
+    this.client = new Client();
   }
+  client: Client;
+  /**
+   * Pushes changes to remote database
+   */
   push: EduVaultPush;
   /**
    * Pulls a collection from the remote and applies local changes on top of it. Also creates a snapshot of each the local and remote state before sync stored in localStorage in case the user wants to roll back changes after the sync
@@ -131,7 +137,7 @@ export const startLocalDB =
   (eduvault: EduVault) =>
   async ({ version = 1, onStart, onReady, name }: StartLocalDBOptions) => {
     try {
-      if (eduvault.log) console.log('starting local db', version);
+      if (eduvault.log) console.log('starting local db', { version });
       if (onStart) onStart();
       const db = await new EduvaultDB({
         name,
@@ -151,23 +157,89 @@ export const startLocalDB =
 
       await eduvault.setDb(db);
       if (onReady) onReady(db);
+      if (eduvault.log) console.log('started local db', { db });
       return { db };
     } catch (error) {
       return { error };
     }
   };
 
-export const startCLientDB = async ({
-  getUserAuth,
-}: {
-  getUserAuth: () => Promise<PersonAuth>;
-}) => {
-  const client = await Client.withUserAuth(getUserAuth);
-  const threads = await client.listThreads();
-  console.log('connected to client with threads', { threads });
-  console.log({ client, threads });
-  const dbs = await client.listDBs();
-  console.log({ dbs });
+export const startClientDB =
+  (eduvault: EduVault) =>
+  async ({ getUserAuth }: { getUserAuth: () => Promise<PersonAuth> }) => {
+    const oldToken = localStorage.getItem(textileTokenStorageName);
+    let client: Client;
+
+    const testAndSetClient = async () => {
+      if (!eduvault.db) throw 'no db';
+      const threads = await client.listThreads();
+      if (threads.length > 0) {
+        eduvault.db.client = client;
+        return client;
+      } else throw 'no threads';
+    };
+
+    if (oldToken) {
+      try {
+        const ctx = new Context().withToken(oldToken);
+        client = new Client(ctx);
+        return await testAndSetClient();
+      } catch (error) {
+        client = await Client.withUserAuth(getUserAuth);
+        return await testAndSetClient();
+      }
+    } else {
+      client = await Client.withUserAuth(getUserAuth);
+      return await testAndSetClient();
+    }
+  };
+
+/** returns true if valid config */
+const checkConfig = async (
+  remote: Remote
+): Promise<false | Remote['config']> => {
+  const checkIfSignedInLastWeek = (lastSigned: string[]) => {
+    if (lastSigned && lastSigned.length > 0) {
+      const aWeekAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+      const lastSignedDate = new Date(lastSigned[0]);
+      if (lastSignedDate < aWeekAgo) return false;
+
+      return true;
+    }
+    return false;
+  };
+  const config = remote.config;
+
+  const localConfig = JSON.parse(
+    localStorage.getItem(remoteConfigStorageName) ?? '"{}"'
+  );
+
+  // if the passed config is valid (has metadata and signature is not expired) return it.
+  const lastSigned = config.metadata?.get('x-textile-api-sig-msg');
+  if (lastSigned)
+    if (checkIfSignedInLastWeek(lastSigned)) {
+      // console.log('config is valid');
+      return config;
+    }
+  // console.log('config is expired');
+
+  // otherwise inspect the saved config and return it if it is valid
+  if (localConfig && localConfig.metadata) {
+    const localConfigKeys = Object.keys(localConfig.metadata.headersMap);
+    if (localConfigKeys.length === 0) return false;
+    const lastSigned = localConfig.metadata.headersMap['x-textile-api-sig-msg'];
+    if (checkIfSignedInLastWeek(lastSigned)) {
+      // console.log('localConfig is valid');
+      localConfigKeys.forEach((key) =>
+        config.metadata?.set(key, localConfig.metadata.headersMap[key])
+      );
+
+      return config;
+    }
+    // console.log('localConfig is expired');
+  }
+
+  return false;
 };
 
 export const startRemoteDB =
@@ -184,41 +256,54 @@ export const startRemoteDB =
       const db = eduvault.db;
       if (!db) throw 'no db found';
 
+      let token = '';
       const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
-      const userAuth = await getUserAuth();
-      const remote = await db.remote.setUserAuth(userAuth);
-      const token = await remote.authorize(privateKey);
-      // how can I use the token/userAuth here? I don't want to have to call `getUserAuth` again because it calls the server again with the wholse websockets dance.
-      // const client = Client.withUserAuth(getUserAuth);
-      // client.listen(threadID, [{}], () => {
-      //   console.log('listener triggered');
-      // });
 
-      try {
-        remote.id = threadID.toString();
-        const DBInfo = await remote.info();
-        console.log({ DBInfo });
-      } catch (error) {
+      const authenticate = async () => {
+        const userAuth = await getUserAuth();
+        await db.remote.setUserAuth(userAuth);
+        localStorage.setItem(
+          remoteConfigStorageName,
+          JSON.stringify(db.remote.config)
+        );
+        token = await db.remote.authorize(privateKey);
+        localStorage.setItem(textileTokenStorageName, token);
+        return token;
+      };
+
+      const tryConnection = async (remote: Remote) => {
         try {
-          console.log({ error });
-          await remote.initialize(threadID.toString());
+          const DBInfo = await remote.info();
+          return DBInfo.key;
         } catch (error) {
-          remote.id = threadID.toString();
-          console.log({ initializeError: error });
+          try {
+            console.log('get dbinfo error', { error });
+            const initialized = await remote.initialize(threadID.toString());
+            return initialized;
+          } catch (error) {
+            console.log('initializeError', { error });
+          }
+        }
+        return false;
+      };
+      db.remote.id = threadID.toString();
+      const validConfig = await checkConfig(db.remote);
+
+      if (validConfig) {
+        db.remote.config = validConfig;
+        const res = await tryConnection(db.remote);
+        if (res) {
+          if (onReady) onReady(db);
+          return { db, remote: db.remote, token, getUserAuth };
         }
       }
-      // try {
-      //   const DBInfo = await remote.info();
-      //   console.log({ DBInfo });
-      // } catch (error) {
-      //   console.log({ DBInfoError: error });
-      // }
+      await authenticate();
 
-      // console.log({ remote, token });
-      // remote.config.metadata?.set('x-textile-thread-name', db.dexie.name);
-      // remote.config.metadata?.set('x-textile-thread', db.id || '');
-      if (onReady) onReady(db);
-      return { db, remote, token, getUserAuth };
+      const res = await tryConnection(db.remote);
+      if (res) {
+        if (onReady) onReady(db);
+        return { db, remote: db.remote, token, getUserAuth };
+      } else throw 'error connecting to remote db';
     } catch (error) {
       console.log({ error });
       return { error };
