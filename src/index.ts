@@ -1,9 +1,6 @@
-import { Buckets, PrivateKey } from '@textile/hub';
-import { JSONSchema, ThreadID } from '@textile/threaddb';
-import {
-  Collection,
-  CollectionConfig,
-} from '@textile/threaddb/dist/cjs/local/collection';
+import { PrivateKey } from '@textile/hub';
+
+import { ThreadID } from '@textile/threaddb';
 
 import { api } from './api';
 import { URL_API, URL_APP, URL_WS_API } from './config';
@@ -68,14 +65,18 @@ class EduVault {
   }
 }
 export default EduVault;
+
+export { Buckets, Update } from '@textile/hub';
+export { JSONSchema, ThreadID } from '@textile/threaddb';
+export {
+  Collection,
+  CollectionConfig,
+} from '@textile/threaddb/dist/cjs/local/collection';
+
 export {
   EduVault,
   EduvaultDB,
-  Buckets,
   Instances,
-  JSONSchema,
-  CollectionConfig,
-  Collection,
   setupLoginButton,
   startLocalDB,
   startRemoteDB,
