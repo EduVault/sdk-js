@@ -4,7 +4,6 @@ import { EduVault, LoginRedirectQueries } from '../index';
 import { parseQueries } from '../api/helpers';
 import { decryptAndTestKey } from '../utils';
 import { decrypt, encrypt } from '../utils';
-import { startCLientDB } from '.';
 
 // import { ulid } from 'ulid';
 export interface Credentials {
@@ -20,7 +19,7 @@ const startLocal = async (
 ) => {
   const { db, error } = await eduvault.startLocalDB({
     onReady,
-    name: 'eduvault-' + privateKey.pubKey.toString(),
+    name: 'eduvault-' + privateKey.pubKey.toString().slice(0, 8),
   });
   if (error || !db) throw error;
   return db;
@@ -32,13 +31,13 @@ const startRemote = async (
   jwt: string,
   privateKey: PrivateKey
 ) => {
-  const remote = await eduvault.startRemoteDB({
+  const { getUserAuth, error } = await eduvault.startRemoteDB({
     threadID,
     jwt,
     privateKey,
   });
-  if (remote.error) throw remote.error;
-  return remote;
+  if (error || !getUserAuth) throw error;
+  return { getUserAuth };
 };
 
 /**
@@ -52,7 +51,7 @@ export const loadPasswordRedirect = async ({
   loginToken,
   pubKey,
   threadIDStr,
-  options: { onReady, onLogin, onLocalReady, onError },
+  options: { onRemoteReady, onClientReady, onLogin, onLocalReady, onError },
 }: LoginRedirectQueries & {
   eduvault: EduVault;
   options: LoadOptions;
@@ -94,20 +93,32 @@ export const loadPasswordRedirect = async ({
     if (!loggedIn) throw 'cookie authentication failed';
     if (onLogin) onLogin();
 
+    // clear url
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.href.split('?')[0]
+    );
+
     const jwtEncryptedPrivateKey = encrypt(keyStr, jwt);
     localStorage.setItem('jwtEncryptedPrivateKey', jwtEncryptedPrivateKey);
-
-    await startLocal(eduvault, onLocalReady, privateKey);
 
     const threadID = ThreadID.fromString(threadIDStr);
     if (!threadID || !threadID.isDefined()) throw 'error restoring threadID';
 
-    await startRemote(eduvault, threadID, jwt, privateKey);
+    await startLocal(eduvault, onLocalReady, privateKey);
 
-    if (onReady) onReady();
-    // if (remote.getUserAuth) {
-    //   startCLientDB({ getUserAuth: remote.getUserAuth });
-    // }
+    const { getUserAuth } = await startRemote(
+      eduvault,
+      threadID,
+      jwt,
+      privateKey
+    );
+    if (onRemoteReady) onRemoteReady();
+    if (eduvault.log) console.log('remote started');
+
+    await eduvault.startClientDB({ getUserAuth });
+    if (onClientReady) onClientReady();
   } catch (error) {
     if (eduvault.log) console.log('loadPasswordRedirect error');
     if (eduvault.log) console.error(error);
@@ -118,7 +129,7 @@ export const loadPasswordRedirect = async ({
 export const loadReturningPerson = async ({
   eduvault,
   jwtEncryptedPrivateKey,
-  options: { onReady, onLogin, onLocalReady, onError },
+  options: { onRemoteReady, onClientReady, onLogin, onLocalReady, onError },
 }: {
   eduvault: EduVault;
   jwtEncryptedPrivateKey: string;
@@ -180,15 +191,16 @@ export const loadReturningPerson = async ({
 
     await startLocal(eduvault, onLocalReady, privateKey);
 
-    const remote = await startRemote(eduvault, threadID, jwt, privateKey);
+    const { getUserAuth } = await startRemote(
+      eduvault,
+      threadID,
+      jwt,
+      privateKey
+    );
+    if (onRemoteReady) onRemoteReady();
 
-    //doesn't seem to reach here
-    if (eduvault.log)
-      console.log('remote started, remote.getUserAuth', remote.getUserAuth);
-    if (remote.getUserAuth) {
-      startCLientDB({ getUserAuth: remote.getUserAuth });
-    }
-    if (onReady) onReady();
+    await eduvault.startClientDB({ getUserAuth });
+    if (onClientReady) onClientReady();
   } catch (error) {
     if (eduvault.log) console.log('loadReturningPerson error');
     if (eduvault.log) console.error(error);
@@ -207,7 +219,8 @@ export const loadOffline = (pwEncryptedPrivateKey: string) => {
 
 export interface LoadOptions {
   onStart?: () => unknown;
-  onReady?: () => unknown;
+  onRemoteReady?: () => unknown;
+  onClientReady?: () => unknown;
   onLocalReady?: () => unknown;
   onError?: (error: string) => unknown;
   onLogin?: () => unknown;
