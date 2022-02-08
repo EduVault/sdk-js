@@ -14,6 +14,7 @@ import {
   loginWithChallenge,
   pwLogin,
   setupLoginButton,
+  startClientDB,
   startLocalDB,
   startRemoteDB,
 } from './methods';
@@ -61,6 +62,7 @@ class EduVault {
   loginWithChallenge = loginWithChallenge(this);
   startLocalDB = startLocalDB(this);
   startRemoteDB = startRemoteDB(this);
+  startClientDB = startClientDB(this);
   constructor(options: initOptions) {
     init(this, options);
   }
