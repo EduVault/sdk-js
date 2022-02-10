@@ -73,12 +73,4 @@ export {
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
 
-export {
-  EduVault,
-  EduvaultDB,
-  Instances,
-  InstanceBase,
-  setupLoginButton,
-  startLocalDB,
-  startRemoteDB,
-};
+export { EduVault, EduvaultDB, Instances, InstanceBase };
