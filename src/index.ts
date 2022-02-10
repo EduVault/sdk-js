@@ -1,9 +1,9 @@
 import { PrivateKey } from '@textile/hub';
-
 import { ThreadID } from '@textile/threaddb';
 
-import { api } from './api';
 import { URL_API, URL_APP, URL_WS_API } from './config';
+import { initOptions, InstanceBase, Instances } from './types';
+import { api } from './api';
 import {
   EduvaultDB,
   init,
@@ -15,13 +15,16 @@ import {
   startLocalDB,
   startRemoteDB,
 } from './methods';
-import { initOptions, InstanceBase, Instances } from './types';
 
 export * from './types';
 export { startWorker } from './api/mocks/browser';
 export { startServer as mockServer } from './api/mocks/server';
 
 class EduVault {
+  constructor(options: initOptions) {
+    init(this, options);
+  }
+
   // config variables
   URL_APP = URL_APP;
   URL_API = URL_API;
@@ -60,9 +63,6 @@ class EduVault {
   startLocalDB = startLocalDB(this);
   startRemoteDB = startRemoteDB(this);
   startClientDB = startClientDB(this);
-  constructor(options: initOptions) {
-    init(this, options);
-  }
 }
 export default EduVault;
 
