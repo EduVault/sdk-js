@@ -3,18 +3,14 @@ import {
   Collection,
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
+import { InstanceBase } from '../types';
 
 export const noteKey = 'note';
 
-/**
- * createdDate and updatedDate are craeated with `new Date().getTime()`
- */
-export interface INote {
-  _id: string;
+export type INote = InstanceBase<{
   text: string;
-  createdDate: number;
-  editedDate: number;
-}
+}>;
+
 export type NoteCollection = Collection<INote>;
 export const noteSchema: JSONSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
@@ -22,11 +18,14 @@ export const noteSchema: JSONSchema = {
   title: 'Note',
   properties: {
     _id: { type: 'string' },
+    _mod: { type: 'string' },
+    _created: { type: 'number' },
+    _ttl: { type: 'number' },
+    _deleted: { type: 'boolean' },
+
     text: { type: 'string' },
-    createdDate: { type: 'number' },
-    editedDate: { type: 'number' },
   },
-  required: ['_id', 'text', 'createdDate', 'editedDate'],
+  required: ['_id', 'text'],
 };
 
 const collections: CollectionConfig[] = [

@@ -15,7 +15,7 @@ import {
   startLocalDB,
   startRemoteDB,
 } from './methods';
-import { initOptions, Instances } from './types';
+import { initOptions, InstanceBase, Instances } from './types';
 
 export * from './types';
 export { startWorker } from './api/mocks/browser';
@@ -77,6 +77,7 @@ export {
   EduVault,
   EduvaultDB,
   Instances,
+  InstanceBase,
   setupLoginButton,
   startLocalDB,
   startRemoteDB,

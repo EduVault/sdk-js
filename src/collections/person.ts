@@ -3,15 +3,16 @@ import {
   Collection,
   CollectionConfig,
 } from '@textile/threaddb/dist/cjs/local/collection';
+import { InstanceBase } from '../types';
 
 /*
  *  This should contain all of the person's home page and cross-app preferences
  */
-export interface IPerson {
-  _id: string;
+export type IPerson = InstanceBase<{
   username: string;
   birthDay?: number;
-}
+}>;
+
 export type PersonCollection = Collection<IPerson>;
 export const personKey = 'person';
 export const personSchema: JSONSchema = {
@@ -19,15 +20,14 @@ export const personSchema: JSONSchema = {
   type: 'object',
   title: 'Person',
   properties: {
-    _id: {
-      type: 'string',
-    },
-    username: {
-      type: 'string',
-    },
-    birthDay: {
-      type: 'number',
-    },
+    _id: { type: 'string' },
+    _mod: { type: 'string' },
+    _created: { type: 'number' },
+    _ttl: { type: 'number' },
+    _deleted: { type: 'boolean' },
+
+    username: { type: 'string' },
+    birthDay: { type: 'number' },
   },
   required: ['_id', 'username'],
 };

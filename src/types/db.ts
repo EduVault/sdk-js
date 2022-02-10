@@ -10,9 +10,27 @@ import EduVault, { INote, IPerson } from '../index';
 
 export { CollectionConfig, Instance };
 
-export type Instances<T> = (T & {
+export type InstanceBase<T> = T & {
   _id: string;
-} & Instance)[];
+  /**
+   * Date last modified
+   * number created with `new Date().getTime()`
+   */
+  _mod?: number;
+  /**
+   * Date created
+   * number created with `new Date().getTime()`
+   */
+  _created?: number;
+  /**
+   * Time To Live. Will be deleted when this date is reached
+   * number created with `new Date().getTime(days * 30)`
+   */
+  _ttl?: number;
+  _deleted?: boolean;
+};
+
+export type Instances<T> = (Instance & InstanceBase<T>)[];
 
 export interface CoreCollections {
   Note?: Collection<INote>;
