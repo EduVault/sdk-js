@@ -47,7 +47,8 @@ export const setupLoginButton =
         return { error: 'appID not found' };
       }
 
-      const clientToken = localStorage.getItem('clientToken') ?? ulid();
+      localStorage.clear();
+      const clientToken = ulid();
       localStorage.setItem('clientToken', clientToken);
 
       const loginButtonQueries: LoginButtonQueries = {

@@ -7,7 +7,7 @@ import {
   PasswordLoginRes,
 } from '../index';
 import { formatQueries, parseQueries } from '../api/helpers';
-import {
+import { 
   decryptAndTestKey,
   encrypt,
   formatPasswordSignIn,

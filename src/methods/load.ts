@@ -17,9 +17,12 @@ const startLocal = async (
   onReady: LoadOptions['onLocalReady'],
   privateKey: PrivateKey
 ) => {
+  const name =
+    'eduvault-' + privateKey.pubKey.toString().replaceAll(',', '').slice(0, 8);
+  console.log({ name });
   const { db, error } = await eduvault.startLocalDB({
     onReady,
-    name: 'eduvault-' + privateKey.pubKey.toString().slice(0, 8),
+    name,
   });
   if (error || !db) throw error;
   return db;

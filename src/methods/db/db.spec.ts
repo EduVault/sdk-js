@@ -1,5 +1,5 @@
 import { EduvaultDB, getCollections } from './db';
-import EduVault, { INote, IPerson, noteKey, personKey } from '../';
+import EduVault, { INote, IPerson, noteKey, personKey } from '../..';
 
 const name = 'unit-test-db';
 const collections = [...getCollections()];
@@ -47,13 +47,13 @@ describe('EduvaultDB', () => {
     let findPerson = await Person?.findById('123');
     expect(findPerson?._id).toBe('123');
   });
-  test('setupLocalListener', async () => {
+  test('registerDexieListener', async () => {
     const eduvault = new EduVault({ appID: '1' });
     let { db, error } = await eduvault.startLocalDB({ name });
     if (error) throw error;
     const listenSpy = jest.fn();
 
-    db?.registerLocalListener(async (req, res, tableName) => {
+    db?.registerDexieListener(async () => {
       // console.log('table updated', tableName);
       listenSpy();
     });
