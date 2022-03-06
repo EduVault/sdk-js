@@ -13,7 +13,7 @@ export { CollectionConfig, Instance };
 export type InstanceBase<T> = T & {
   _id: string;
   /**
-   * Date last modified
+   * Used exclusively by Dexie: Date last modified
    * number created with `new Date().getTime()`
    */
   _mod?: number;
@@ -28,6 +28,11 @@ export type InstanceBase<T> = T & {
    */
   _ttl?: number;
   _deleted?: boolean;
+  /**
+   * Used exclusively by Eduvault: Date last modified
+   * number created with `new Date().getTime()`
+   */
+  _updatedAt?: number;
 };
 
 export type Instances<T> = (Instance & InstanceBase<T>)[];
@@ -65,19 +70,15 @@ export type EduVaultSync = (collectionNames: string[]) => Promise<
 >;
 
 /**
- * Pushes changes to remote.
+ * Pushes changes to remote with a default 5 second debounce
  * If it fails it will add current collection to backlog.
  * Tries the backlog on each call.
  */
-export type EduVaultPush = (collectionNames: string[]) => Promise<
-  | {
-      error: unknown;
-    }
-  | {
-      success: string[];
-      backlog: string[];
-    }
->;
+export type EduVaultPush = (collectionNames: string[]) => Promise<{
+  success: string[];
+  backlog: string[];
+}>;
+
 export interface StartRemoteDBOptions {
   threadID: ThreadID;
   jwt: string;
