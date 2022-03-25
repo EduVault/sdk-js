@@ -141,7 +141,7 @@ export const startRemoteDB =
             const collections: string[] = [];
             eduvault.db
               .collections()
-              .forEach((value, key) => collections.push(key));
+              .forEach((_value, key) => collections.push(key));
             console.log({ collections });
             await eduvault.db.remote.push(...collections);
             return true;
