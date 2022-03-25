@@ -10,11 +10,12 @@ export type DexieMutationEvent = (
 export const setUpDexieListener = (
   db: EduvaultDB,
   onChange: DexieMutationEvent,
-  tables: string[] = []
+  tables: string[] = [],
+  listenerName?: string
 ) => {
   return db.dexie.use({
     stack: 'dbcore',
-    name: 'EduVault-Listener',
+    name: listenerName ?? 'EduVault-Listener',
     create(downlevelDatabase) {
       return {
         ...downlevelDatabase,

@@ -1,5 +1,7 @@
-import { Remote } from '@textile/threaddb';
+import { PrivateKey, Remote } from '@textile/threaddb';
+
 import EduVault, { StartRemoteDBOptions } from '../..';
+
 import { remoteConfigStorageName, textileTokenStorageName } from './db';
 
 /** returns true if valid config */
@@ -52,37 +54,41 @@ const checkConfig = async (
 
 export const startRemoteDB =
   (eduvault: EduVault) =>
-  async ({
-    threadID,
-    jwt,
-    privateKey,
-    onStart,
-    onReady,
-  }: StartRemoteDBOptions) => {
+  async ({ threadID, jwt, privateKey }: StartRemoteDBOptions) => {
     try {
-      if (onStart) onStart();
-      const db = eduvault.db;
-      if (!db) throw 'no db found';
+      if (!eduvault.db) throw 'no db found'; // just to satisfy compiler. should never happen.
 
-      let token = '';
-      const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
+      const authenticate = async (jwt: string, privateKey: PrivateKey) => {
+        if (!eduvault.db) throw 'no db found';
 
-      const authenticate = async () => {
-        console.log('authenticating');
-        const userAuth = await getUserAuth();
-        await db.remote.setUserAuth(userAuth);
-        token = await db.remote.authorize(privateKey);
-        localStorage.setItem(
-          remoteConfigStorageName,
-          JSON.stringify(db.remote.config)
-        );
-        localStorage.setItem(textileTokenStorageName, token);
-        return token;
-      };
-
-      const tryConnection = async () => {
         try {
-          const initialized = await db.remote.initialize(threadID.toString());
+          const getUserAuth = eduvault.loginWithChallenge(jwt, privateKey);
+          console.log('authenticating');
+          const userAuth = await getUserAuth();
+          console.log('userAuth', userAuth);
+          const setUserAuth = await eduvault.db.remote.setUserAuth(userAuth);
+          console.log('setUserAuth', setUserAuth);
+          const token = await eduvault.db.remote.authorize(privateKey);
+          console.log('authenticated, saving token', token);
+          localStorage.setItem(
+            remoteConfigStorageName,
+            JSON.stringify(eduvault.db.remote.config)
+          );
+          localStorage.setItem(textileTokenStorageName, token);
+          if (!token) throw 'no token';
+          return true;
+        } catch (e) {
+          console.log(e);
+          return false;
+        }
+      };
+      const initialize = async () => {
+        if (!eduvault.db) throw 'no db found';
+
+        try {
+          const initialized = await eduvault.db.remote.initialize(
+            threadID.toString()
+          );
           console.log('initialized', initialized);
 
           if (initialized !== threadID.toString())
@@ -92,10 +98,6 @@ export const startRemoteDB =
           // this error means that the thread is already initialized
           if (error.message.includes('E11000')) {
             console.log('thread already initialized');
-            const DBInfo = await db.remote.info();
-            console.log({ DBInfo });
-            const notes = await db.remote.pull('note');
-            console.log({ notes });
             return true;
           }
           console.error(error);
@@ -103,26 +105,73 @@ export const startRemoteDB =
         }
       };
 
-      db.remote.id = threadID.toString();
-      const validConfig = await checkConfig(db.remote);
+      const tryConnection = async () => {
+        if (!eduvault.db) throw 'no db found';
 
-      if (validConfig) {
-        db.remote.set(validConfig);
+        const initialized = await initialize();
+        if (!initialized) throw 'not initialized';
 
-        const res = await tryConnection();
-        if (res) {
-          if (onReady) onReady(db);
-          return { db, remote: db.remote, token, getUserAuth };
+        const attempt = async () => {
+          if (!eduvault.db) throw 'no db found';
+
+          const info = await eduvault.db.remote.info();
+          // is this really a good test if connection is authenticated? try calling this before auth and see if it fails.
+          if (!info) throw 'db info not found';
+          console.log({ info });
+          // const collections: string[] = [];
+          // eduvault.db
+          //   .collections()
+          //   .forEach((value, key) => collections.push(key));
+          // console.log({ collections });
+          // const notes = await eduvault.db.remote.pull(collections[0]);
+          // stalls out here
+          // const notes = await eduvault.db.remote.pull(noteKey);
+          // console.log({ notes });
+          // if (notes) return true;
+
+          if (info.key) return true;
+          else throw 'core collections not found';
+        };
+
+        try {
+          return await attempt();
+        } catch (error: any) {
+          if (error.message.includes('Unpushed local changes')) {
+            console.log('unpushed local changes');
+            const collections: string[] = [];
+            eduvault.db
+              .collections()
+              .forEach((value, key) => collections.push(key));
+            console.log({ collections });
+            await eduvault.db.remote.push(...collections);
+            return true;
+          }
+          console.log('tryConnection attempt error:', error);
+          if (error.message.includes('Auth expired')) {
+            const authenticated = await authenticate(jwt, privateKey);
+            if (authenticated) return await attempt();
+            else throw 'authentication failed';
+          }
+          return false;
         }
+      };
+
+      eduvault.db.remote.id = threadID.toString();
+      const validConfig = await checkConfig(eduvault.db.remote);
+      if (validConfig) {
+        console.log('valid config');
+        eduvault.db.remote.set(validConfig);
+      } else {
+        console.log('invalid config');
+        const authenticated = await authenticate(jwt, privateKey);
+        if (!authenticated) throw 'authentication failed';
       }
-      await authenticate();
-      const res = await tryConnection();
-      if (res) {
-        if (onReady) onReady(db);
-        return { db, remote: db.remote, token, getUserAuth };
-      } else throw 'error connecting to remote db';
+
+      const connected = await tryConnection();
+      if (connected) return true;
+      else throw 'error connecting to remote db';
     } catch (error) {
-      console.log({ error });
-      return { error };
+      console.log('startRemoteDB error:', error);
+      throw error;
     }
   };

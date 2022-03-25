@@ -1,5 +1,6 @@
 import { EduvaultDB, getCollections } from './db';
 import EduVault, { INote, IPerson, noteKey, personKey } from '../..';
+import { PrivateKey } from '@textile/hub';
 
 const name = 'unit-test-db';
 const collections = [...getCollections()];
@@ -30,10 +31,12 @@ describe('EduvaultDB', () => {
       Person: db.collection<IPerson>(personKey),
     });
   });
+
+  const privateKey = PrivateKey.fromRandom();
   test('startLocalDB', async () => {
     const eduvault = new EduVault({ appID: '12' });
 
-    let { db, error } = await eduvault.startLocalDB({ name });
+    let { db, error } = await eduvault.startLocalDB({ privateKey });
     if (error) throw error;
 
     const Person = await db?.coreCollections.Person;
@@ -49,7 +52,7 @@ describe('EduvaultDB', () => {
   });
   test('registerDexieListener', async () => {
     const eduvault = new EduVault({ appID: '1' });
-    let { db, error } = await eduvault.startLocalDB({ name });
+    let { db, error } = await eduvault.startLocalDB({ privateKey });
     if (error) throw error;
     const listenSpy = jest.fn();
 
@@ -72,7 +75,7 @@ describe('EduvaultDB', () => {
   });
   test('onSyncingChange', async () => {
     const eduvault = new EduVault({ appID: '1' });
-    let { db, error } = await eduvault.startLocalDB({ name });
+    let { db, error } = await eduvault.startLocalDB({ privateKey });
     if (error) throw error;
     if (!db) throw 'no db';
     const called = jest.fn();

@@ -41,13 +41,6 @@ export interface CoreCollections {
   Note?: Collection<INote>;
   Person?: Collection<IPerson>;
 }
-export interface StartLocalDBOptions {
-  version?: number;
-  onStart?: () => any;
-  onReady?: (db: Database) => any;
-  name: string;
-  onChange?: () => any;
-}
 
 export interface DBOptions {
   name: string;

@@ -73,7 +73,8 @@ export class EduvaultDB extends Database {
   registerDexieListener = (
     onChange: DexieMutationEvent,
     collections?: string[],
-    actionTypes?: string[]
+    actionTypes?: string[],
+    listenerName?: string
   ) =>
     setUpDexieListener(
       this,
@@ -86,7 +87,8 @@ export class EduvaultDB extends Database {
         }
         return onChange(req, res, tableName);
       },
-      collections
+      collections,
+      listenerName
     );
 }
 
@@ -142,8 +144,8 @@ export const push =
       const collectionsToPush = [...collectionNames];
       if (eduvault.log)
         console.log(
-          'after debounce, time: ',
-          new Date().getSeconds(),
+          'starting push: ',
+
           collectionsToPush
         );
       // const previousBacklog = getPushBacklog();
@@ -208,12 +210,20 @@ export const sync = (eduvault: EduVault) => {
         //   .sortBy('_id');
         // if (localInstances)
         //   setSnapshot(collectionName, localInstances, 'local');
-        await eduvault.db.remote.createStash();
+        try {
+          await eduvault.db.remote.createStash();
+        } catch (error: any) {
+          console.log('create stash error', error.message);
+        }
         // const remoteInfo = await eduvault.db.remote.info();
         // console.log({ remoteInfo });
-        console.log('pull');
-        const pulled = await eduvault.db.remote.pull(collectionName);
-        console.log({ pulled });
+        console.log('starting pull');
+        try {
+          const pulled = await eduvault.db.remote.pull(collectionName);
+          if (eduvault.log) console.log({ pulled });
+        } catch (error: any) {
+          console.log('pull error', error.message);
+        }
         // const remoteInstances = await eduvault?.db
         //   ?.collection(collectionName)
         //   ?.find()
@@ -232,8 +242,11 @@ export const sync = (eduvault: EduVault) => {
         //   console.log({ remoteDiffs, localDiffs });
         // }
 
-        console.log('applyStash');
-        await eduvault.db.remote.applyStash(collectionName);
+        try {
+          await eduvault.db.remote.applyStash(collectionName);
+        } catch (error: any) {
+          console.log('applyStash error', error.message);
+        }
 
         // // for debugging
         // const afterApplyStash = await eduvault?.db
@@ -248,7 +261,7 @@ export const sync = (eduvault: EduVault) => {
       };
       const promises = collectionNames.map(syncCollection);
       const result = await Promise.all(promises);
-      console.log({ result });
+      // console.log({ result });
       eduvault.db.setIsSyncing(false);
 
       return { result };
@@ -257,7 +270,7 @@ export const sync = (eduvault: EduVault) => {
       eduvault.db?.setIsSyncing(false);
       return { error };
     } finally {
-      console.log('sync finally');
+      console.log('finished sync');
       eduvault.db?.setIsSyncing(false);
     }
   };
