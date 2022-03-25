@@ -79,7 +79,7 @@ describe('EduvaultDB', () => {
   });
   test('onSyncingChange', async () => {
     const eduvault = new EduVault({ appID: '1' });
-    let { db, error } = await eduvault.startLocalDB({ privateKey });
+    let { db, error } = await eduvault.startLocalDB({ privateKey, name });
     if (error) throw error;
     if (!db) throw 'no db';
     const called = jest.fn();
