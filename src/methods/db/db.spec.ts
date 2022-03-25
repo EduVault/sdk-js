@@ -5,6 +5,7 @@ import { PrivateKey } from '@textile/hub';
 const name = 'unit-test-db';
 const collections = [...getCollections()];
 const newPerson: IPerson = { _id: '123', username: '123@123.123' };
+const privateKey = PrivateKey.fromRandom();
 
 describe('EduvaultDB', () => {
   test('getCollections', () => {
@@ -32,11 +33,10 @@ describe('EduvaultDB', () => {
     });
   });
 
-  const privateKey = PrivateKey.fromRandom();
   test('startLocalDB', async () => {
     const eduvault = new EduVault({ appID: '12' });
 
-    let { db, error } = await eduvault.startLocalDB({ privateKey });
+    let { db, error } = await eduvault.startLocalDB({ privateKey, name });
     if (error) throw error;
 
     const Person = await db?.coreCollections.Person;
@@ -52,26 +52,30 @@ describe('EduvaultDB', () => {
   });
   test('registerDexieListener', async () => {
     const eduvault = new EduVault({ appID: '1' });
-    let { db, error } = await eduvault.startLocalDB({ privateKey });
-    if (error) throw error;
-    const listenSpy = jest.fn();
+    try {
+      let { db, error } = await eduvault.startLocalDB({ privateKey, name });
+      if (error) throw error;
+      const listenSpy = jest.fn();
 
-    db?.registerDexieListener(async () => {
-      // console.log('table updated', tableName);
-      listenSpy();
-    });
-    const Person = await db?.coreCollections.Person;
-    await Person?.clear();
-    if (!Person) throw 'person collection missing ';
-    expect(listenSpy).toHaveBeenCalledTimes(1);
-    let count = await Person?.find({}).count();
-    expect(count).toBe(0);
-    // await Person?.create(newPerson).save();
-    await db?.collection('person')?.create(newPerson).save();
-    expect(listenSpy).toHaveBeenCalledTimes(3);
+      db?.registerDexieListener(async () => {
+        // console.log('table updated', tableName);
+        listenSpy();
+      });
+      const Person = await db?.coreCollections.Person;
+      await Person?.clear();
+      if (!Person) throw 'person collection missing ';
+      expect(listenSpy).toHaveBeenCalledTimes(1);
+      let count = await Person?.find({}).count();
+      expect(count).toBe(0);
+      // await Person?.create(newPerson).save();
+      await db?.collection('person')?.create(newPerson).save();
+      expect(listenSpy).toHaveBeenCalledTimes(3);
 
-    count = await Person?.find({}).count();
-    expect(count).toBe(1);
+      count = await Person?.find({}).count();
+      expect(count).toBe(1);
+    } catch (error) {
+      console.log(error);
+    }
   });
   test('onSyncingChange', async () => {
     const eduvault = new EduVault({ appID: '1' });

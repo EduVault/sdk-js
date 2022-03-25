@@ -10,15 +10,17 @@ import { getCollections } from './db';
 export interface StartLocalDBOptions {
   version?: number;
   privateKey: PrivateKey;
+  name?: string;
 }
 
 export const startLocalDB =
   (eduvault: EduVault) =>
-  async ({ version = 1, privateKey }: StartLocalDBOptions) => {
+  async ({ version = 1, privateKey, name }: StartLocalDBOptions) => {
     try {
-      const name =
-        'eduvault-' +
-        privateKey.pubKey.toString().replaceAll(',', '').slice(0, 8);
+      if (!name)
+        name =
+          'eduvault-' +
+          privateKey.pubKey.toString().replaceAll(',', '').slice(0, 8);
 
       if (eduvault.log) console.log('starting local db', { version, name });
 
