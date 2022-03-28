@@ -68,6 +68,7 @@ export const startRemoteDB =
           console.log('userAuth', userAuth);
           const setUserAuth = await eduvault.db.remote.setUserAuth(userAuth);
           console.log('setUserAuth', setUserAuth);
+          // this doesn't seem to work with 'secure' api keys that require the user auth song and dance
           const token = await eduvault.db.remote.authorize(privateKey);
           console.log('authenticated, saving token', token);
           localStorage.setItem(
